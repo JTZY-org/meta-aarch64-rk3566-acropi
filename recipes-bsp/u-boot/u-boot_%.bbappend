@@ -1,9 +1,6 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:${THISDIR}/files:"
 
-SRC_URI = "git://github.com/rockchip-linux/u-boot.git;protocol=https;branch=next-dev \
-           file://uart2-fix.patch \
-           file://debug-uart.cfg \
-          "
+SRC_URI = "git://github.com/rockchip-linux/u-boot.git;protocol=https;branch=next-dev"
 
 SRCREV = "${AUTOREV}"
 
