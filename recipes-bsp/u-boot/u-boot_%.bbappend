@@ -1,6 +1,8 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:${THISDIR}/files:"
 
-SRC_URI = "git://github.com/rockchip-linux/u-boot.git;protocol=https;branch=next-dev"
+SRC_URI = "git://github.com/rockchip-linux/u-boot.git;protocol=https;branch=next-dev \
+           file://fix-buildbl31-script.patch \
+           file://parameter.txt"
 
 SRCREV = "${AUTOREV}"
 
@@ -16,31 +18,6 @@ DEPENDS += "rkbin-native u-boot-tools-native python3-native"
 
 export BL31 = "${STAGING_DATADIR_NATIVE}/rkbin/bin/rk35/rk3568_bl31_v1.43.elf"
 export TEE = "${STAGING_DATADIR_NATIVE}/rkbin/bin/rk35/rk3568_bl32_v2.10.bin"
-
-# Fix scripts in source tree to support out-of-tree build and Python 3
-do_patch:append() {
-    bb.note("Patching Rockchip scripts for out-of-tree build and Python 3")
-    
-    import subprocess
-    s = d.getVar('S')
-    
-    # 1. Remove leading ./ from source commands to support absolute paths
-    subprocess.run(['sed', '-i', 's|source \./${srctree}|source ${srctree}|g', f"{s}/arch/arm/mach-rockchip/make_fit_atf.sh"])
-    subprocess.run(['sed', '-i', 's|source \./${srctree}|source ${srctree}|g', f"{s}/arch/arm/mach-rockchip/fit_nodes.sh"])
-    
-    # 2. Update fit_args.sh to read configuration from the build directory instead of source directory
-    subprocess.run(['sed', '-i', 's|^srctree=$PWD|#srctree=$PWD|g', f"{s}/arch/arm/mach-rockchip/fit_args.sh"])
-    subprocess.run(['sed', '-i', 's|${srctree}/include/autoconf.mk|./include/autoconf.mk|g', f"{s}/arch/arm/mach-rockchip/fit_args.sh"])
-    
-    # 3. Fix include paths in fit_nodes.sh as well
-    subprocess.run(['sed', '-i', 's|${srctree}/include/autoconf.mk|./include/autoconf.mk|g', f"{s}/arch/arm/mach-rockchip/fit_nodes.sh"])
-    
-    # 4. Patch Python 2 to Python 3 in decode_bl31.py
-    subprocess.run(['sed', '-i', 's|python2|python3|g', f"{s}/arch/arm/mach-rockchip/decode_bl31.py"])
-
-    # 5. Append custom name to the main Makefile version
-    subprocess.run(['sed', '-i', 's|^EXTRAVERSION =|EXTRAVERSION = -BUILD BY TSKangetu|g', f"{s}/Makefile"])
-}
 
 do_compile:prepend() {
     # Link BL31 ELF to build directory
@@ -103,13 +80,6 @@ do_deploy:append() {
     fi
 
     # 3. Deploy parameter.txt from the layer root
-    if [ -f "${THISDIR}/../../parameter.txt" ]; then
-        install -m 644 ${THISDIR}/../../parameter.txt ${DEPLOYDIR}/parameter.txt
-    fi
+    install -m 644 ${S}/../parameter.txt ${DEPLOYDIR}/parameter.txt
 
-    # 4. Clean up unnecessary standard U-Boot artifacts
-    rm -f ${DEPLOYDIR}/u-boot.bin
-    rm -f ${DEPLOYDIR}/u-boot-*.bin
-    rm -f ${DEPLOYDIR}/u-boot-initial-env*
-    rm -f ${DEPLOYDIR}/u-boot.img-*
 }

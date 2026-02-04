@@ -1,0 +1,95 @@
+From: TSKangetsu <x403070567@live.com>
+Date: Wed, 4 Feb 2026 10:00:00 +0800
+Subject: [PATCH] fix buildbl31 script path
+
+Upstream-Status: Inappropriate [configuration]
+
+diff --git a/Makefile b/Makefile
+index 1012b065ad..d74164d66d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -5,7 +5,7 @@
+ VERSION = 2017
+ PATCHLEVEL = 09
+ SUBLEVEL =
+-EXTRAVERSION =
++EXTRAVERSION = -BUILD BY TSKangetu
+ NAME =
+ 
+ # *DOCUMENTATION*
+diff --git a/arch/arm/mach-rockchip/decode_bl31.py b/arch/arm/mach-rockchip/decode_bl31.py
+index 301bd15375..c0db739484 100755
+--- a/arch/arm/mach-rockchip/decode_bl31.py
++++ b/arch/arm/mach-rockchip/decode_bl31.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python2
++#!/usr/bin/env python3
+ #
+ # Copyright (C) 2020 Rockchip Electronics Co., Ltd
+ #
+diff --git a/arch/arm/mach-rockchip/fit_args.sh b/arch/arm/mach-rockchip/fit_args.sh
+index ea234791c3..a013cd1683 100755
+--- a/arch/arm/mach-rockchip/fit_args.sh
++++ b/arch/arm/mach-rockchip/fit_args.sh
+@@ -5,7 +5,7 @@
+ # SPDX-License-Identifier: GPL-2.0
+ #
+ 
+-srctree=$PWD
++#srctree=$PWD
+ 
+ function help()
+ {
+@@ -37,7 +37,7 @@ function help()
+ 	echo
+ }
+ 
+-DRAM_BASE=`sed -n "/CONFIG_SYS_SDRAM_BASE=/s/CONFIG_SYS_SDRAM_BASE=//p" ${srctree}/include/autoconf.mk|tr -d '\r'`
++DRAM_BASE=`sed -n "/CONFIG_SYS_SDRAM_BASE=/s/CONFIG_SYS_SDRAM_BASE=//p" ./include/autoconf.mk|tr -d '\r'`
+ 
+ if [ $# -eq 1 ]; then
+ 	# default
+@@ -117,7 +117,7 @@ else
+ fi
+ 
+ if ! grep -q '^CONFIG_FIT_OMIT_UBOOT=y' .config ; then
+-	UBOOT_LOAD_ADDR=`sed -n "/CONFIG_SYS_TEXT_BASE=/s/CONFIG_SYS_TEXT_BASE=//p" ${srctree}/include/autoconf.mk|tr -d '\r'`
++	UBOOT_LOAD_ADDR=`sed -n "/CONFIG_SYS_TEXT_BASE=/s/CONFIG_SYS_TEXT_BASE=//p" ./include/autoconf.mk|tr -d '\r'`
+ fi
+ 
+ # ARCH
+diff --git a/arch/arm/mach-rockchip/fit_nodes.sh b/arch/arm/mach-rockchip/fit_nodes.sh
+index 8ed26337e2..c589e36982 100755
+--- a/arch/arm/mach-rockchip/fit_nodes.sh
++++ b/arch/arm/mach-rockchip/fit_nodes.sh
+@@ -6,7 +6,7 @@
+ #
+ 
+ # Process args and auto set variables
+-source ./${srctree}/arch/arm/mach-rockchip/fit_args.sh
++source ${srctree}/arch/arm/mach-rockchip/fit_args.sh
+ rm -f ${srctree}/*.digest ${srctree}/*.bin.gz ${srctree}/bl31_0x*.bin
+ 
+ # Periph register base
+@@ -21,7 +21,7 @@ MAX_ADDR_VAL=$((0xf0000000))
+ fi
+ 
+ # dram base
+-DRAM_BASE_VAL=`sed -n "/CONFIG_SYS_SDRAM_BASE=/s/CONFIG_SYS_SDRAM_BASE=//p" ${srctree}/include/autoconf.mk|tr -d '\r'`
++DRAM_BASE_VAL=`sed -n "/CONFIG_SYS_SDRAM_BASE=/s/CONFIG_SYS_SDRAM_BASE=//p" ./include/autoconf.mk|tr -d '\r'`
+ 
+ # compression
+ if [ "${COMPRESSION}" == "gzip" ]; then
+diff --git a/arch/arm/mach-rockchip/make_fit_atf.sh b/arch/arm/mach-rockchip/make_fit_atf.sh
+index 32ef33b8b0..2211562a6b 100755
+--- a/arch/arm/mach-rockchip/make_fit_atf.sh
++++ b/arch/arm/mach-rockchip/make_fit_atf.sh
+@@ -5,7 +5,7 @@
+ # SPDX-License-Identifier:     GPL-2.0+
+ #
+ 
+-source ./${srctree}/arch/arm/mach-rockchip/fit_nodes.sh
++source ${srctree}/arch/arm/mach-rockchip/fit_nodes.sh
+ 
+ gen_header
+ gen_uboot_node
