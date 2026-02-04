@@ -4,7 +4,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 inherit kernel
 
 SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=develop-6.1 \
-           file://cpufreq.cfg"
+           file://cpufreq.cfg \
+           file://extlinux.conf"
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
 
@@ -21,6 +22,12 @@ do_deploy:append() {
     cp ${B}/arch/${ARCH}/boot/Image ${WORKDIR}/boot-image/boot/
     if ls ${B}/arch/${ARCH}/boot/dts/rockchip/rk3566*.dtb >/dev/null 2>&1; then
         cp ${B}/arch/${ARCH}/boot/dts/rockchip/rk3566*.dtb ${WORKDIR}/boot-image/boot/
+    fi
+
+    # 2. Copy extlinux.conf (From local sources)
+    if [ -f "${UNPACKDIR}/extlinux.conf" ]; then
+        mkdir -p ${WORKDIR}/boot-image/boot/extlinux
+        cp "${UNPACKDIR}/extlinux.conf" ${WORKDIR}/boot-image/boot/extlinux/
     fi
 
     # 4. Generate boot.img

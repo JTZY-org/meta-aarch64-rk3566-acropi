@@ -102,9 +102,9 @@ do_deploy:append() {
         install -m 644 ${B}/${ORIG_LOADER_NAME} ${DEPLOYDIR}/${ORIG_LOADER_NAME}
     fi
 
-    # 3. Deploy parameter_gpt.txt if it exists in the project root
-    if [ -f "${TOPDIR}/../parameter_gpt.txt" ]; then
-        install -m 644 ${TOPDIR}/../parameter_gpt.txt ${DEPLOYDIR}/parameter.txt
+    # 3. Deploy parameter.txt from the layer root
+    if [ -f "${THISDIR}/../../parameter.txt" ]; then
+        install -m 644 ${THISDIR}/../../parameter.txt ${DEPLOYDIR}/parameter.txt
     fi
 
     # 4. Clean up unnecessary standard U-Boot artifacts
