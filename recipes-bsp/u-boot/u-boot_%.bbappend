@@ -1,8 +1,10 @@
-FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:${THISDIR}/files:"
+FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI = "git://github.com/rockchip-linux/u-boot.git;protocol=https;branch=next-dev \
-           file://fix-buildbl31-script.patch \
-           file://parameter.txt"
+           file://0000-fix-buildbl31-script.patch \
+           file://0001-add-RK809-PMIC.patch \
+           file://parameter.txt \
+           file://boot.cfg"
 
 SRCREV = "${AUTOREV}"
 
@@ -12,12 +14,16 @@ COMPATIBLE_MACHINE = "rk3566-acropi"
 
 LIC_FILES_CHKSUM = "file://Licenses/README;md5=a2c678cfd4a4d97135585cad908541c6"
 
-EXTRA_OEMAKE:append = " KCFLAGS='-Wno-error=maybe-uninitialized -Wno-error=enum-int-mismatch -Wno-error=unused-variable'"
+EXTRA_OEMAKE:append = " KCFLAGS='-Wno-error'"
 
 DEPENDS += "rkbin-native u-boot-tools-native python3-native"
 
 export BL31 = "${STAGING_DATADIR_NATIVE}/rkbin/bin/rk35/rk3568_bl31_v1.43.elf"
 export TEE = "${STAGING_DATADIR_NATIVE}/rkbin/bin/rk35/rk3568_bl32_v2.10.bin"
+
+do_configure:append() {
+    cat "${UNPACKDIR}/boot.cfg" >> "${B}/.config"
+}
 
 do_compile:prepend() {
     # Link BL31 ELF to build directory
@@ -79,7 +85,11 @@ do_deploy:append() {
         install -m 644 ${B}/${ORIG_LOADER_NAME} ${DEPLOYDIR}/${ORIG_LOADER_NAME}
     fi
 
-    # 3. Deploy parameter.txt from the layer root
-    install -m 644 ${S}/../parameter.txt ${DEPLOYDIR}/parameter.txt
+    # 3. Deploy parameter.txt - locate it dynamically in WORKDIR
+    if [ -f "${WORKDIR}/parameter.txt" ]; then
+        install -m 644 ${WORKDIR}/parameter.txt ${DEPLOYDIR}/parameter.txt
+    elif [ -f "${S}/../parameter.txt" ]; then
+        install -m 644 ${S}/../parameter.txt ${DEPLOYDIR}/parameter.txt
+    fi
 
 }

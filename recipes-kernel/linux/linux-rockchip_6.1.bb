@@ -5,7 +5,8 @@ inherit kernel
 
 SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=develop-6.1 \
            file://cpufreq.cfg \
-           file://extlinux.conf"
+           file://extlinux.conf \
+           file://custom-dts.patch"
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
 
@@ -48,5 +49,4 @@ do_configure:append() {
     if [ -f "${UNPACKDIR}/cpufreq.cfg" ]; then
         cat "${UNPACKDIR}/cpufreq.cfg" >> "${B}/.config"
     fi
-    echo "&uart2 { status = \"okay\"; };" >> ${S}/arch/arm64/boot/dts/rockchip/rk3566-evb2-lp4x-v10.dts
 }
