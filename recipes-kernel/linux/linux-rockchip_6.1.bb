@@ -6,7 +6,7 @@ inherit kernel
 SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=develop-6.1 \
            file://cpufreq.cfg \
            file://extlinux.conf \
-           file://custom-dts.patch"
+           file://0001-add-dts-for-acropi.patch"
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
 
