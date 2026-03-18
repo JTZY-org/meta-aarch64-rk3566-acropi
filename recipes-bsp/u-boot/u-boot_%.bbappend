@@ -2,9 +2,10 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 SRC_URI = "git://github.com/rockchip-linux/u-boot.git;protocol=https;branch=next-dev \
            file://0000-fix-buildbl31-script.patch \
-           file://0001-add-RK809-PMIC.patch \
            file://parameter.txt \
-           file://boot.cfg"
+           file://boot.cfg \
+           file://0001-add-RK809-PMIC-with-u-boot-dm-spl-tags.patch \
+           "
 
 SRCREV = "${AUTOREV}"
 
@@ -79,11 +80,7 @@ do_deploy:append() {
     fi
 
     # 2. Deploy the loader using only its original Rockchip name
-    RKBIN_DIR="${STAGING_DATADIR_NATIVE}/rkbin"
-    ORIG_LOADER_NAME=$(grep "^PATH=" ${RKBIN_DIR}/RKBOOT/RK3566MINIALL.ini | cut -d'=' -f2 | tr -d '\r')
-    if [ -f "${B}/${ORIG_LOADER_NAME}" ]; then
-        install -m 644 ${B}/${ORIG_LOADER_NAME} ${DEPLOYDIR}/${ORIG_LOADER_NAME}
-    fi
+    install -m 644 ${B}/rk356x_spl_loader_*.bin ${DEPLOYDIR}/
 
     # 3. Deploy parameter.txt - locate it dynamically in WORKDIR
     if [ -f "${WORKDIR}/parameter.txt" ]; then

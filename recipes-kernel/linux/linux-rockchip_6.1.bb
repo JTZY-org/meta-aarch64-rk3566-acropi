@@ -5,8 +5,11 @@ inherit kernel
 
 SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=develop-6.1 \
            file://cpufreq.cfg \
+           file://lttng.cfg \
            file://extlinux.conf \
-           file://0001-add-dts-for-acropi.patch"
+           file://0001-add-dts-for-acropi.patch \
+           file://0002-add-usb-phy-and-otg-node.patch \
+           "
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
 
@@ -43,10 +46,13 @@ do_deploy:append() {
     find ${DEPLOYDIR} -type l -delete 
 }
 
-S = "${UNPACKDIR}/linux-rockchip-6.1"
+S = "${UNPACKDIR}/git"
 
 do_configure:append() {
     if [ -f "${UNPACKDIR}/cpufreq.cfg" ]; then
         cat "${UNPACKDIR}/cpufreq.cfg" >> "${B}/.config"
+    fi
+    if [ -f "${UNPACKDIR}/lttng.cfg" ]; then
+        cat "${UNPACKDIR}/lttng.cfg" >> "${B}/.config"
     fi
 }

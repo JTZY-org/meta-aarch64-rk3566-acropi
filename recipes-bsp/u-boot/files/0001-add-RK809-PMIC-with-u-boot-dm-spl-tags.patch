@@ -1,0 +1,156 @@
+From bddfaeb4fbea4d04d5b9456d690550564ca8d8db Mon Sep 17 00:00:00 2001
+From: TSKangetsu <x403070567@live.com>
+Date: Fri, 6 Mar 2026 09:10:49 +0800
+Subject: [PATCH] add RK809 PMIC with u-boot,dm-spl tags
+Upstream-Status: Inappropriate [configuration]
+
+---
+ arch/arm/dts/rk3568-evb.dts | 129 +++++++++++++++++++++++++++++++++++-
+ 1 file changed, 126 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm/dts/rk3568-evb.dts b/arch/arm/dts/rk3568-evb.dts
+index 614736a019..424f908521 100644
+--- a/arch/arm/dts/rk3568-evb.dts
++++ b/arch/arm/dts/rk3568-evb.dts
+@@ -27,9 +27,28 @@
+ 			label = "volume up";
+ 			press-threshold-microvolt = <9>;
+ 		};
+-	};
+-};
++		};
+ 
++		vcc5v0_sys: vcc5v0-sys {
++		compatible = "regulator-fixed";
++		regulator-name = "vcc5v0_sys";
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-min-microvolt = <5000000>;
++		regulator-max-microvolt = <5000000>;
++		};
++
++		vcc3v3_sys: vcc3v3-sys {
++		u-boot,dm-spl;
++		compatible = "regulator-fixed";
++		regulator-name = "vcc3v3_sys";
++		regulator-always-on;
++		regulator-boot-on;
++		regulator-min-microvolt = <3300000>;
++		regulator-max-microvolt = <3300000>;
++		vin-supply = <&vcc5v0_sys>;
++		};
++		};
+ &gmac0 {
+ 	phy-mode = "rgmii";
+ 	clock_in_out = "output";
+@@ -102,5 +121,109 @@
+ };
+ 
+ &uart2 {
+-	status = "okay";
++        status = "okay";
++};
++
++&i2c0 {
++        u-boot,dm-spl;
++        status = "okay";
++        pinctrl-names = "default";
++        pinctrl-0 = <&i2c0_xfer>;
++
++        pmic: pmic@20 {
++                u-boot,dm-spl;
++                compatible = "rockchip,rk809";
++                reg = <0x20>;
++                interrupt-parent = <&gpio0>;
++                interrupts = <RK_PA3 IRQ_TYPE_LEVEL_LOW>;
++
++                pinctrl-names = "default";
++                pinctrl-0 = <&pmic_int_l>;
++
++                rockchip,system-power-controller;
++                wakeup-source;
++
++                vcc1-supply = <&vcc3v3_sys>;
++                vcc2-supply = <&vcc3v3_sys>;
++                vcc3-supply = <&vcc3v3_sys>;
++                vcc4-supply = <&vcc3v3_sys>;
++                vcc5-supply = <&vcc3v3_sys>;
++                vcc6-supply = <&vcc3v3_sys>;
++                vcc7-supply = <&vcc3v3_sys>;
++                vcc8-supply = <&vcc3v3_sys>;
++                vcc9-supply = <&vcc3v3_sys>;
++
++                pwrkey {
++                        status = "okay";
++                };
++
++                regulators {
++                        vdd_logic: DCDC_REG1 {
++                                u-boot,dm-spl;
++                                regulator-name = "vdd_logic";
++                                regulator-always-on;
++                                regulator-boot-on;
++                                regulator-min-microvolt = <500000>;
++                                regulator-max-microvolt = <1350000>;
++                                regulator-init-microvolt = <900000>;
++                                regulator-ramp-delay = <6001>;
++                                regulator-initial-mode = <0x2>;
++
++                                regulator-state-mem {
++                                        regulator-off-in-suspend;
++                                };
++                        };
++
++                        vdd_gpu: DCDC_REG2 {
++                                regulator-name = "vdd_gpu";
++                                regulator-always-on;
++                                regulator-boot-on;
++                                regulator-min-microvolt = <500000>;
++                                regulator-max-microvolt = <1350000>;
++                                regulator-init-microvolt = <900000>;
++                                regulator-ramp-delay = <6001>;
++                                regulator-initial-mode = <0x2>;
++
++                                regulator-state-mem {
++                                        regulator-off-in-suspend;
++                                };
++                        };
++
++                        vcc_ddr: DCDC_REG3 {
++                                u-boot,dm-spl;
++                                regulator-name = "vcc_ddr";
++                                regulator-always-on;
++                                regulator-boot-on;
++                                regulator-initial-mode = <0x2>;
++
++                                regulator-state-mem {
++                                        regulator-on-in-suspend;
++                                };
++                        };
++
++                        vdd_npu: DCDC_REG4 {
++                                regulator-name = "vdd_npu";
++                                regulator-always-on;
++                                regulator-boot-on;
++                                regulator-min-microvolt = <500000>;
++                                regulator-max-microvolt = <1350000>;
++                                regulator-init-microvolt = <900000>;
++                                regulator-ramp-delay = <6001>;
++                                regulator-initial-mode = <0x2>;
++
++                                regulator-state-mem {
++                                        regulator-off-in-suspend;
++                                };
++                        };
++                };
++        };
+ };
++
++&pinctrl {
++        pmic {
++                pmic_int_l: pmic-int-l {
++                        rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
++                };
++        };
++};
++

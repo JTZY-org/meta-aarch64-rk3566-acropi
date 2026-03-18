@@ -1,0 +1,10 @@
+#!/bin/sh
+case "$1" in
+  start)
+    /usr/bin/usb-rndis-setup.sh
+    ;;
+  stop)
+    echo "" > /sys/kernel/config/usb_gadget/g1/UDC
+    ;;
+esac
+exit 0
