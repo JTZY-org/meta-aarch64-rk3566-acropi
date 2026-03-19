@@ -1,21 +1,125 @@
-From 02f0fd8b7dd3b191ae7279464c3334c512d22f91 Mon Sep 17 00:00:00 2001
+From 871fcb5512edfb20909f20737ebd9b76c079521d Mon Sep 17 00:00:00 2001
 From: TSKangetsu <x403070567@live.com>
 Date: Wed, 18 Mar 2026 11:30:25 +0800
 Subject: [PATCH] add usb phy and otg node
 
 Upstream-Status: Inappropriate [configuration]
 ---
- .../boot/dts/rockchip/rk3566-acropi-lp4x.dts   | 21 ++++++++++++++++++
- 1 file changed, 21 insertions(+)
+ .../boot/dts/rockchip/rk3566-acropi-lp4x.dts  | 286 ++++++++----------
+ 1 file changed, 131 insertions(+), 155 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3566-acropi-lp4x.dts b/arch/arm64/boot/dts/rockchip/rk3566-acropi-lp4x.dts
-index 81d480a19ed0..15d25bcf95ec 100644
+index 81d480a19ed0..8b74f31c1a7e 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3566-acropi-lp4x.dts
 +++ b/arch/arm64/boot/dts/rockchip/rk3566-acropi-lp4x.dts
-@@ -52,6 +52,27 @@ vcc3v3_sys: vcc3v3-sys {
- 	};
+@@ -13,181 +13,157 @@
+ #include "rk3566.dtsi"
+ 
+ / {
+-	model = "Acropi RK3566 Board";
+-	compatible = "rockchip,rk3566";
+-
+-	aliases {
+-		mmc0 = &sdhci;
+-	};
+-
+-	fiq-debugger {
+-		compatible = "rockchip,fiq-debugger";
+-		rockchip,serial-id = <2>;
+-		rockchip,wake-irq = <0>;
+-		rockchip,irq-mode-enable = <1>;
+-		rockchip,baudrate = <1500000>;
+-		interrupts = <GIC_SPI 252 IRQ_TYPE_LEVEL_LOW>;
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&uart2m0_xfer>;
+-		status = "disabled";
+-	};
+-
+-	vcc5v0_sys: vcc5v0-sys {
+-		compatible = "regulator-fixed";
+-		regulator-name = "vcc5v0_sys";
+-		regulator-always-on;
+-		regulator-boot-on;
+-		regulator-min-microvolt = <5000000>;
+-		regulator-max-microvolt = <5000000>;
+-	};
+-
+-	vcc3v3_sys: vcc3v3-sys {
+-		compatible = "regulator-fixed";
+-		regulator-name = "vcc3v3_sys";
+-		regulator-always-on;
+-		regulator-boot-on;
+-		regulator-min-microvolt = <3300000>;
+-		regulator-max-microvolt = <3300000>;
+-		vin-supply = <&vcc5v0_sys>;
+-	};
++        model = "Acropi RK3566 Board";
++        compatible = "rockchip,rk3566";
++
++        aliases {
++                mmc0 = &sdhci;
++        };
++
++        fiq-debugger {
++                compatible = "rockchip,fiq-debugger";
++                rockchip,serial-id = <2>;
++                rockchip,wake-irq = <0>;
++                rockchip,irq-mode-enable = <1>;
++                rockchip,baudrate = <1500000>;
++                interrupts = <GIC_SPI 252 IRQ_TYPE_LEVEL_LOW>;
++                pinctrl-names = "default";
++                pinctrl-0 = <&uart2m0_xfer>;
++                status = "disabled";
++        };
++
++        vcc5v0_sys: vcc5v0-sys {
++                compatible = "regulator-fixed";
++                regulator-name = "vcc5v0_sys";
++                regulator-always-on;
++                regulator-boot-on;
++                regulator-min-microvolt = <5000000>;
++                regulator-max-microvolt = <5000000>;
++        };
++
++        vcc3v3_sys: vcc3v3-sys {
++                compatible = "regulator-fixed";
++                regulator-name = "vcc3v3_sys";
++                regulator-always-on;
++                regulator-boot-on;
++                regulator-min-microvolt = <3300000>;
++                regulator-max-microvolt = <3300000>;
++                vin-supply = <&vcc5v0_sys>;
++        };
++
++        gpu_opp_table_fixed: opp-table-gpu {
++                compatible = "operating-points-v2";
++                opp-200000000 { opp-hz = /bits/ 64 <200000000>; opp-microvolt = <900000>; };
++                opp-400000000 { opp-hz = /bits/ 64 <400000000>; opp-microvolt = <900000>; };
++                opp-600000000 { opp-hz = /bits/ 64 <600000000>; opp-microvolt = <1000000>; };
++                opp-800000000 { opp-hz = /bits/ 64 <800000000>; opp-microvolt = <1000000>; };
++        };
++
++        npu_opp_table_fixed: opp-table-npu {
++                compatible = "operating-points-v2";
++                opp-200000000 { opp-hz = /bits/ 64 <200000000>; opp-microvolt = <900000>; };
++                opp-400000000 { opp-hz = /bits/ 64 <400000000>; opp-microvolt = <900000>; };
++                opp-600000000 { opp-hz = /bits/ 64 <600000000>; opp-microvolt = <1000000>; };
++        };
  };
  
+-&scmi {
+-	arm,smc-id = <0x82000010>;
+-	shmem = <&scmi_shmem>;
+-	status = "okay";
++&cpu0 {
++       clocks = <&cru ARMCLK>;
++       cpu-supply = <&vdd_logic>;
++};
++
++&cpu1 { cpu-supply = <&vdd_logic>; };
++&cpu2 { cpu-supply = <&vdd_logic>; };
++&cpu3 { cpu-supply = <&vdd_logic>; };
++
 +&usb2phy0 {
 +       status = "okay";
 +       phy-supply = <&vcc5v0_sys>;
@@ -23,8 +127,10 @@ index 81d480a19ed0..15d25bcf95ec 100644
 +
 +&u2phy0_otg {
 +       status = "okay";
-+};
-+
+ };
+ 
+-&scmi_clk {
+-	rockchip,clk-init = "Tfr";
 +&usbdrd_dwc3 {
 +        status = "okay";
 +        dr_mode = "otg";
@@ -33,12 +139,189 @@ index 81d480a19ed0..15d25bcf95ec 100644
 +        snps,usb2-lpm-disable;   
 +        snps,dis-u2-freeclk-exists-quirk;
 +};
++
 +&usbdrd30 {
 +       status = "okay";
 +};
 +
- &scmi {
- 	arm,smc-id = <0x82000010>;
- 	shmem = <&scmi_shmem>;
--- 
-2.34.1
++&scmi {
++        status = "disabled";
+ };
+ 
+ &i2c0 {
+-	status = "okay";
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&i2c0_xfer>;
+-
+-	pmic: pmic@20 {
+-		compatible = "rockchip,rk809";
+-		reg = <0x20>;
+-		interrupt-parent = <&gpio0>;
+-		interrupts = <RK_PA3 IRQ_TYPE_LEVEL_LOW>;
+-		
+-		pinctrl-names = "default";
+-		pinctrl-0 = <&pmic_int_l>;
+-		
+-		rockchip,system-power-controller;
+-		wakeup-source;
+-
+-		vcc1-supply = <&vcc3v3_sys>;
+-		vcc2-supply = <&vcc3v3_sys>;
+-		vcc3-supply = <&vcc3v3_sys>;
+-		vcc4-supply = <&vcc3v3_sys>;
+-		vcc5-supply = <&vcc3v3_sys>;
+-		vcc6-supply = <&vcc3v3_sys>;
+-		vcc7-supply = <&vcc3v3_sys>;
+-		vcc8-supply = <&vcc3v3_sys>;
+-		vcc9-supply = <&vcc3v3_sys>;
+-
+-		pwrkey {
+-			status = "okay";
+-		};
+-
+-		charger {
+-			compatible = "rockchip,rk817-charger";
+-			status = "okay";
+-		};
+-
+-		regulators {
+-			vdd_logic: DCDC_REG1 {
+-				regulator-name = "vdd_logic";
+-				regulator-always-on;
+-				regulator-boot-on;
+-				regulator-min-microvolt = <500000>;
+-				regulator-max-microvolt = <1350000>;
+-				regulator-init-microvolt = <900000>;
+-				regulator-ramp-delay = <6001>;
+-				regulator-initial-mode = <0x2>;
+-				regulator-state-mem {
+-					regulator-off-in-suspend;
+-				};
+-			};
+-
+-			vdd_gpu: DCDC_REG2 {
+-				regulator-name = "vdd_gpu";
+-				regulator-always-on;
+-				regulator-boot-on;
+-				regulator-min-microvolt = <500000>;
+-				regulator-max-microvolt = <1350000>;
+-				regulator-init-microvolt = <900000>;
+-				regulator-ramp-delay = <6001>;
+-				regulator-initial-mode = <0x2>;
+-				regulator-state-mem {
+-					regulator-off-in-suspend;
+-				};
+-			};
+-
+-			vcc_ddr: DCDC_REG3 {
+-				regulator-name = "vcc_ddr";
+-				regulator-always-on;
+-				regulator-boot-on;
+-				regulator-initial-mode = <0x2>;
+-				regulator-state-mem {
+-					regulator-on-in-suspend;
+-				};
+-			};
+-
+-			vdd_npu: DCDC_REG4 {
+-				regulator-name = "vdd_npu";
+-				regulator-always-on;
+-				regulator-boot-on;
+-				regulator-min-microvolt = <500000>;
+-				regulator-max-microvolt = <1350000>;
+-				regulator-init-microvolt = <900000>;
+-				regulator-ramp-delay = <6001>;
+-				regulator-initial-mode = <0x2>;
+-				regulator-state-mem {
+-					regulator-off-in-suspend;
+-				};
+-			};
+-		};
+-	};
++        status = "okay";
++        pinctrl-names = "default";
++        pinctrl-0 = <&i2c0_xfer>;
++
++        pmic: pmic@20 {
++                compatible = "rockchip,rk809";
++                reg = <0x20>;
++                interrupt-parent = <&gpio0>;
++                interrupts = <RK_PA3 IRQ_TYPE_LEVEL_LOW>;
++                pinctrl-names = "default";
++                pinctrl-0 = <&pmic_int_l>;
++                rockchip,system-power-controller;
++                wakeup-source;
++
++                vcc1-supply = <&vcc3v3_sys>;
++                vcc2-supply = <&vcc3v3_sys>;
++                vcc3-supply = <&vcc3v3_sys>;
++                vcc4-supply = <&vcc3v3_sys>;
++                vcc5-supply = <&vcc3v3_sys>;
++                vcc6-supply = <&vcc3v3_sys>;
++                vcc7-supply = <&vcc3v3_sys>;
++                vcc8-supply = <&vcc3v3_sys>;
++                vcc9-supply = <&vcc3v3_sys>;
++
++                regulators {
++                        vdd_logic: DCDC_REG1 { regulator-name = "vdd_logic"; regulator-always-on; regulator-boot-on; };
++                        vdd_gpu: DCDC_REG2 { regulator-name = "vdd_gpu"; regulator-always-on; regulator-boot-on; };
++                        vcc_ddr: DCDC_REG3 { regulator-name = "vcc_ddr"; regulator-always-on; regulator-boot-on; };
++                        vdd_npu: DCDC_REG4 { regulator-name = "vdd_npu"; regulator-always-on; regulator-boot-on; };
++                };
++        };
+ };
+ 
+ &pinctrl {
+-	pmic {
+-		pmic_int_l: pmic-int-l {
+-			rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
+-		};
+-	};
++        pmic { pmic_int_l: pmic-int-l { rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>; }; };
+ };
+ 
+ &rknpu {
+-	compatible = "rockchip,rk3568-rknpu", "rockchip,rknpu";
+-	clocks = <&scmi_clk 2>, <&cru CLK_NPU>, <&cru ACLK_NPU>, <&cru HCLK_NPU>;
+-	clock-names = "scmi_clk", "clk", "aclk", "hclk";
+-	interrupt-names = "npu_irq";
+-	rknpu-supply = <&vdd_npu>;
+-	status = "okay";
++        clocks = <&cru CLK_NPU>, <&cru ACLK_NPU>, <&cru HCLK_NPU>;
++        clock-names = "clk", "aclk", "hclk";
++        interrupt-names = "npu_irq";
++        operating-points-v2 = <&npu_opp_table_fixed>;
++        rknpu-supply = <&vdd_npu>;
++        status = "okay";
+ };
+ 
+ &gpu {
+-	compatible = "arm,mali-bifrost";
+-	clocks = <&scmi_clk 1>, <&cru CLK_GPU>;
+-	clock-names = "gpu", "bus";
+-	mali-supply = <&vdd_gpu>;
+-	status = "okay";
++        clocks = <&cru CLK_GPU>, <&cru CLK_GPU>;
++        clock-names = "clk_mali", "clk_gpu";
++        operating-points-v2 = <&gpu_opp_table_fixed>;
++        mali-supply = <&vdd_gpu>;
++        status = "okay";
+ };
+ 
+ &uart2 {
+-	pinctrl-names = "default";
+-	pinctrl-0 = <&uart2m0_xfer>;
+-	status = "okay";
++        status = "okay";
+ };
+ 
+ &sdhci {
+-	status = "okay";
+-	bus-width = <8>;
+-	non-removable;
+-	no-1-8-v;
++        status = "okay";
++        bus-width = <8>;
++        non-removable;
++        no-1-8-v;
+ };

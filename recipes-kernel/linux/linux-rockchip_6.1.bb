@@ -9,6 +9,8 @@ SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=deve
            file://extlinux.conf \
            file://0001-add-dts-for-acropi.patch \
            file://0002-add-usb-phy-and-otg-node.patch \
+           file://monitor.cfg \
+           file://0003-arm64-dts-rockchip-fix-performance-scaling-and-power.patch;patchdir=.. \
            "
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
@@ -54,5 +56,8 @@ do_configure:append() {
     fi
     if [ -f "${UNPACKDIR}/lttng.cfg" ]; then
         cat "${UNPACKDIR}/lttng.cfg" >> "${B}/.config"
+    fi
+    if [ -f "${UNPACKDIR}/monitor.cfg" ]; then
+        cat "${UNPACKDIR}/monitor.cfg" >> "${B}/.config"
     fi
 }
