@@ -10,7 +10,7 @@ SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=deve
            file://0001-add-dts-for-acropi.patch \
            file://0002-add-usb-phy-and-otg-node.patch \
            file://monitor.cfg \
-           file://0003-arm64-dts-rockchip-fix-performance-scaling-and-power.patch;patchdir=.. \
+           file://0003-arm64-dts-rockchip-fix-performance-scaling-and-power.patch \
            "
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"

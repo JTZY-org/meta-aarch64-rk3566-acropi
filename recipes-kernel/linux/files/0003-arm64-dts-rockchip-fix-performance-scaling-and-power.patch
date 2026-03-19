@@ -1,19 +1,27 @@
-From ead108712dd560fb46d10535a28a0cfca496b32a Mon Sep 17 00:00:00 2001
+From c45b27b735bd03af404e22c8ef403cc4a1b58c0b Mon Sep 17 00:00:00 2001
 From: TSKangetsu <x403070567@live.com>
 Date: Thu, 19 Mar 2026 14:36:34 +0800
 Subject: [PATCH] arm64: dts: rockchip: fix performance scaling and power
- models for acropi\n\n- Increase PMIC voltage limits to support higher OPP
- points.\n- Fix CPU clocks for all cores.\n- Link NVMEM leakage cells to
- enable hardware telemetry.\n- Add missing power-model properties for Mali
- GPU.\n\nUpstream-Status: Inappropriate [configuration]\nSigned-off-by:
+ models for acropi
+
+- Increase PMIC voltage limits to support higher OPP
+ points.
+- Fix CPU clocks for all cores.
+- Link NVMEM leakage cells to
+ enable hardware telemetry.
+- Add missing power-model properties for Mali
+ GPU.
+
+Upstream-Status: Inappropriate [configuration]
+Signed-off-by:
  TSKangetsu <x403070567@live.com>
 
 ---
- .../boot/dts/rockchip/rk3566-acropi-lp4x.dts  | 108 +++++++++++++++---
- 1 file changed, 94 insertions(+), 14 deletions(-)
+ .../boot/dts/rockchip/rk3566-acropi-lp4x.dts  | 114 +++++++++++++++---
+ 1 file changed, 100 insertions(+), 14 deletions(-)
 
 diff --git a/arch/arm64/boot/dts/rockchip/rk3566-acropi-lp4x.dts b/arch/arm64/boot/dts/rockchip/rk3566-acropi-lp4x.dts
-index 8b74f31c1a7e..7d139e413458 100644
+index 8b74f31c1a7e..284b21527b7a 100644
 --- a/arch/arm64/boot/dts/rockchip/rk3566-acropi-lp4x.dts
 +++ b/arch/arm64/boot/dts/rockchip/rk3566-acropi-lp4x.dts
 @@ -51,8 +51,29 @@ vcc3v3_sys: vcc3v3-sys {
@@ -121,7 +129,7 @@ index 8b74f31c1a7e..7d139e413458 100644
                  wakeup-source;
  
                  vcc1-supply = <&vcc3v3_sys>;
-@@ -128,16 +171,45 @@ pmic: pmic@20 {
+@@ -128,16 +171,51 @@ pmic: pmic@20 {
                  vcc9-supply = <&vcc3v3_sys>;
  
                  regulators {
@@ -169,10 +177,16 @@ index 8b74f31c1a7e..7d139e413458 100644
 +                        rockchip,pins = <0 RK_PA3 RK_FUNC_GPIO &pcfg_pull_up>;
 +                };
 +        };
++};
++
++&tsadc {
++        status = "okay";
++        rockchip,hw-tshut-mode = <1>; /* 1: GPIO, 0: CRU */
++        rockchip,hw-tshut-polarity = <0>; /* 0: low, 1: high */
  };
  
  &rknpu {
-@@ -155,6 +227,14 @@ &gpu {
+@@ -155,6 +233,14 @@ &gpu {
          operating-points-v2 = <&gpu_opp_table_fixed>;
          mali-supply = <&vdd_gpu>;
          status = "okay";
@@ -187,3 +201,6 @@ index 8b74f31c1a7e..7d139e413458 100644
  };
  
  &uart2 {
+-- 
+2.25.1
+
