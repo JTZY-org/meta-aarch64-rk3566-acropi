@@ -7,13 +7,11 @@ SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=deve
            file://cpufreq.cfg \
            file://lttng.cfg \
            file://extlinux.conf \
-           file://0001-add-dts-for-acropi.patch \
-           file://0002-add-usb-phy-and-otg-node.patch \
            file://monitor.cfg \
-           file://0003-arm64-dts-rockchip-fix-performance-scaling-and-power.patch \
+           file://0001-Add-Acropi-RK3566-DTS-and-update-Makefile.patch;patchdir=.. \
            "
 
-SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
+SRCREV = "${AUTOREV}"
 
 KBUILD_DEFCONFIG = "rockchip_linux_defconfig"
 
@@ -23,27 +21,19 @@ INSANE_SKIP:${PN}-src += "buildpaths"
 
 do_deploy:append() {
     mkdir -p ${WORKDIR}/boot-image/boot
-    
-    # 1. Copy Kernel and DTB
     cp ${B}/arch/${ARCH}/boot/Image ${WORKDIR}/boot-image/boot/
     if ls ${B}/arch/${ARCH}/boot/dts/rockchip/rk3566*.dtb >/dev/null 2>&1; then
         cp ${B}/arch/${ARCH}/boot/dts/rockchip/rk3566*.dtb ${WORKDIR}/boot-image/boot/
     fi
-
-    # 2. Copy extlinux.conf (From local sources)
     if [ -f "${UNPACKDIR}/extlinux.conf" ]; then
         mkdir -p ${WORKDIR}/boot-image/boot/extlinux
         cp "${UNPACKDIR}/extlinux.conf" ${WORKDIR}/boot-image/boot/extlinux/
     fi
-
-    # 4. Generate boot.img
     if [ -f "${DEPLOYDIR}/boot.img" ]; then
         rm "${DEPLOYDIR}/boot.img"
     fi
     dd if=/dev/zero of=${DEPLOYDIR}/boot.img bs=1M count=64
     mkfs.ext2 -F -d ${WORKDIR}/boot-image/boot ${DEPLOYDIR}/boot.img
-
-    # 5. Clean up standard kernel artifacts
     find ${DEPLOYDIR} -type f ! -name "boot.img" -delete
     find ${DEPLOYDIR} -type l -delete 
 }
