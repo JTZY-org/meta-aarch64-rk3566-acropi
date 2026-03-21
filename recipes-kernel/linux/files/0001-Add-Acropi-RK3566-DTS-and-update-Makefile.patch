@@ -3,6 +3,8 @@ From: TSKangetsu <x403070567@live.com>
 Date: Sat, 21 Mar 2026 15:29:32 +0800
 Subject: [PATCH] Add Acropi RK3566 DTS and update Makefile
 
+Upstream-Status: Inappropriate [Configuration]
+
 ---
  arch/arm64/boot/dts/rockchip/Makefile         |   1 +
  .../boot/dts/rockchip/rk3566-acropi-lp4x.dts  | 346 ++++++++++++++++++

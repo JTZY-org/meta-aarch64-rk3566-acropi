@@ -8,10 +8,10 @@ SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=deve
            file://lttng.cfg \
            file://extlinux.conf \
            file://monitor.cfg \
-           file://0001-Add-Acropi-RK3566-DTS-and-update-Makefile.patch;patchdir=.. \
+           file://0001-Add-Acropi-RK3566-DTS-and-update-Makefile.patch \
            "
 
-SRCREV = "${AUTOREV}"
+SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
 
 KBUILD_DEFCONFIG = "rockchip_linux_defconfig"
 
