@@ -45,7 +45,7 @@ FILES:${PN}-adb = "${sysconfdir}/init.d/adb-server"
 
 RDEPENDS:${PN} += "${PN}-usb ${PN}-net ${PN}-adb"
 
-RDEPENDS:${PN}-usb += "busybox kernel-module-libcomposite kernel-module-u-ether kernel-module-usb-f-rndis"
+RDEPENDS:${PN}-usb += "busybox"
 RDEPENDS:${PN}-net += "busybox"
 RDEPENDS:${PN}-adb += "android-tools"
 
