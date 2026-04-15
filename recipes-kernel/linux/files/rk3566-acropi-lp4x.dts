@@ -19,7 +19,10 @@
 
 	aliases {
 		mmc0 = &sdhci;
+		serial0 = &uart0;
+		serial1 = &uart1;
 		serial2 = &uart2;
+		serial3 = &uart3;
 	};
 
 	chosen {
@@ -49,6 +52,8 @@
 	cpu_opp_table_fixed: opp-table-cpu {
 		compatible = "operating-points-v2";
 		opp-shared;
+		nvmem-cells = <&cpu_leakage>;
+		nvmem-cell-names = "leakage";
 
 		opp-408000000 {
 			opp-hz = /bits/ 64 <408000000>;
@@ -77,35 +82,39 @@
 
 	gpu_opp_table_fixed: opp-table-gpu {
 		compatible = "operating-points-v2";
+		nvmem-cells = <&gpu_leakage>;
+		nvmem-cell-names = "leakage";
 
 		opp-200000000 {
 			opp-hz = /bits/ 64 <200000000>;
-			opp-microvolt = <1100000>;
-			opp-microvolt-L0 = <1100000>;
+			opp-microvolt = <1100000 1100000>;
+			opp-microvolt-L0 = <1100000 1100000>;
 		};
 
 		opp-400000000 {
 			opp-hz = /bits/ 64 <400000000>;
-			opp-microvolt = <1100000>;
-			opp-microvolt-L0 = <1100000>;
+			opp-microvolt = <1100000 1100000>;
+			opp-microvolt-L0 = <1100000 1100000>;
 		};
 
 		opp-600000000 {
 			opp-hz = /bits/ 64 <600000000>;
-			opp-microvolt = <1100000>;
-			opp-microvolt-L0 = <1100000>;
+			opp-microvolt = <1100000 1100000>;
+			opp-microvolt-L0 = <1100000 1100000>;
 		};
 
 		opp-800000000 {
 			opp-hz = /bits/ 64 <800000000>;
-			opp-microvolt = <1100000>;
-			opp-microvolt-L0 = <1100000>;
+			opp-microvolt = <1100000 1100000>;
+			opp-microvolt-L0 = <1100000 1100000>;
 		};
 	};
 
 	npu_opp_table_fixed: opp-table-npu {
 		compatible = "operating-points-v2";
 		rockchip,grf = <&grf>;
+		nvmem-cells = <&npu_leakage>;
+		nvmem-cell-names = "leakage";
 
 		opp-200000000 {
 			opp-hz = /bits/ 64 <200000000>;
@@ -131,6 +140,39 @@
 		ports = <&vop_out>;
 		status = "disabled"; /* Temporarily disabled to avoid boot loop */
 	};
+
+	rk809-sound {
+		compatible = "simple-audio-card";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,name = "rockchip,rk809-codec";
+		simple-audio-card,mclk-fs = <256>;
+		status = "okay";
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s1_8ch>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&rk809_codec>;
+		};
+	};
+
+	/* Absolute Path Disable - Bypass missing labels */
+	ethernet_fe010000: ethernet@fe010000 {
+		status = "disabled";
+	};
+
+	ethernet_fe2a0000: ethernet@fe2a0000 {
+		status = "disabled";
+	};
+
+	i2s_fe420000: i2s@fe420000 {
+		status = "disabled";
+	};
+
+	serial_fe650000: serial@fe650000 {
+		status = "disabled";
+	};
 };
 
 &vop {
@@ -146,6 +188,7 @@
 
 &vop_out {
 	status = "disabled";
+
 	vp0: port@0 {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -431,7 +474,26 @@
 				};
 			};
 		};
+
+		rk809_codec: codec {
+			#sound-dai-cells = <0>;
+			compatible = "rockchip,rk809-codec", "rockchip,rk817-codec";
+			clocks = <&cru I2S1_MCLKOUT>;
+			clock-names = "mclk";
+			assigned-clocks = <&cru I2S1_MCLKOUT>;
+			assigned-clock-rates = <12288000>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&i2s1m0_mclk>;
+			hp-volume = <20>;
+			spk-volume = <3>;
+			mic-in-differential;
+			status = "okay";
+		};
 	};
+};
+
+&otp {
+	status = "okay";
 };
 
 &pinctrl {
@@ -444,7 +506,7 @@
 	camera {
 		ucam_pins: ucam-pins {
 			rockchip,pins = <4 RK_PB4 RK_FUNC_GPIO &pcfg_pull_none>,
-							<4 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
+					<4 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
 };
@@ -454,17 +516,15 @@
 	pmuio2-supply = <&vcc3v3_pmu>;
 	vccio1-supply = <&vcc_3v3>;
 	vccio2-supply = <&vcc_1v8>;
-};
-
-&io_domains {
-	status = "okay";
-	vccio1-supply = <&vcc_3v3>;
-	vccio2-supply = <&vcc_1v8>;
 	vccio3-supply = <&vccio_sd>;
-	vccio4-supply = <&vcc_1v8>;
+	vccio4-supply = <&vcc_3v3>;
 	vccio5-supply = <&vcc_3v3>;
 	vccio6-supply = <&vcc_1v8>;
 	vccio7-supply = <&vcc_3v3>;
+};
+
+&io_domains {
+	status = "disabled";
 };
 
 &tsadc {
@@ -477,20 +537,65 @@
 	clocks = <&cru CLK_NPU>, <&cru ACLK_NPU>, <&cru HCLK_NPU>;
 	operating-points-v2 = <&npu_opp_table_fixed>;
 	rknpu-supply = <&vdd_npu>;
+	dynamic-power-coefficient = <3080>;
 	status = "okay";
+
+	npu_power_model: power-model {
+		compatible = "simple-power-model";
+		leakage-range = <4 40>;
+		ls = <0xffffa23e 0x5927 0x00>;
+		static-coefficient = <100000>;
+		dynamic-coefficient = <3080>;
+		ts = <88610 303120 (-5000) 100>;
+		thermal-zone = "soc-thermal";
+	};
 };
 
 &gpu {
 	clocks = <&cru CLK_GPU>, <&cru CLK_GPU>;
 	operating-points-v2 = <&gpu_opp_table_fixed>;
 	mali-supply = <&vdd_gpu>;
+	shadercores-supply = <&vdd_gpu>;
 	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart0_xfer>;
+	dmas = <&dmac0 0>, <&dmac0 1>;
+	dma-names = "tx", "rx";
+};
+
+&uart1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1m0_xfer>;
+	dmas = <&dmac0 2>, <&dmac0 3>;
+	dma-names = "tx", "rx";
 };
 
 &uart2 {
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart2m0_xfer>;
+	dmas = <&dmac0 4>, <&dmac0 5>;
+	dma-names = "tx", "rx";
+};
+
+&uart3 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart3m1_xfer>;
+	dmas = <&dmac0 6>, <&dmac0 7>;
+	dma-names = "tx", "rx";
+};
+
+&i2s1_8ch {
+	status = "okay";
+	rockchip,clk-trcm = <1>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2s1m0_sclktx &i2s1m0_lrcktx &i2s1m0_sdi0 &i2s1m0_sdo0>;
 };
 
 &sdhci {
@@ -528,6 +633,59 @@
 			remote-endpoint = <&csi_dphy1_out>;
 		};
 	};
+};
+
+&mpp_srv {
+	status = "okay";
+};
+
+&rkvenc {
+	status = "okay";
+	venc-supply = <&vdd_logic>;
+	nvmem-cells = <&npu_leakage>;
+	nvmem-cell-names = "venc_leakage";
+
+	rkvenc_power_model: power-model {
+		compatible = "simple-power-model";
+		leakage-range = <4 40>;
+		ls = <0xffffa23e 0x5927 0x00>;
+		static-coefficient = <100000>;
+		dynamic-coefficient = <3080>;
+		ts = <88610 303120 (-5000) 100>;
+		thermal-zone = "soc-thermal";
+	};
+};
+
+&rkvenc_mmu {
+	status = "okay";
+};
+
+&vepu {
+	status = "okay";
+};
+
+&vepu_mmu {
+	status = "okay";
+};
+
+&vdpu {
+	status = "okay";
+};
+
+&vdpu_mmu {
+	status = "okay";
+};
+
+&jpegd {
+	status = "okay";
+};
+
+&jpegd_mmu {
+	status = "okay";
+};
+
+&rk_rga {
+	status = "okay";
 };
 
 &csi2_dphy_hw {
@@ -611,29 +769,74 @@
 };
 
 &usbdrd30 {
-        status = "okay";
+	status = "okay";
 };
 
 &usb2phy0 {
-        status = "okay";
-        phy-supply = <&vcc5v0_sys>;
+	status = "okay";
+	phy-supply = <&vcc5v0_sys>;
 };
 
 &u2phy0_otg {
-        status = "okay";
+	status = "okay";
 };
 
 &usbdrd_dwc3 {
-        status = "okay";
-        dr_mode = "otg";
-        maximum-speed = "high-speed"; 
-        snps,dis_u2_susphy_quirk;
-        snps,usb2-lpm-disable;   
-        snps,dis-u2-freeclk-exists-quirk;
-        snps,dis_enblslpm_quirk;
-        snps,dis-u1u2-quirk;
-        snps,dis-del-phy-power-chg-quirk;
-        snps,dis-tx-ipgap-linecheck-quirk;
-        snps,dis_rxdet_inp3_quirk;
-        snps,xhci-trb-ent-quirk;
+	status = "okay";
+	dr_mode = "otg";
+	maximum-speed = "high-speed"; 
+	snps,dis_u2_susphy_quirk;
+	snps,usb2-lpm-disable;   
+	snps,dis-u2-freeclk-exists-quirk;
+	snps,dis_enblslpm_quirk;
+	snps,dis-u1u2-quirk;
+	snps,dis-del-phy-power-chg-quirk;
+	snps,dis-tx-ipgap-linecheck-quirk;
+	snps,dis_rxdet_inp3_quirk;
+	snps,xhci-trb-ent-quirk;
+};
+
+&spi1 {
+	status = "okay";
+	pinctrl-names = "default", "high_speed";
+	pinctrl-0 = <&spi1m0_cs0 &spi1m0_cs1 &spi1m0_pins>;
+	pinctrl-1 = <&spi1m0_cs0 &spi1m0_cs1 &spi1m0_pins_hs>;
+	dmas = <&dmac0 22>, <&dmac0 23>;
+	dma-names = "tx", "rx";
+	max-freq = <48000000>;
+
+	spidev@0 {
+		compatible = "rockchip,spidev";
+		reg = <0>;
+		spi-max-frequency = <1000000>;
+	};
+
+	spidev@1 {
+		compatible = "rockchip,spidev";
+		reg = <1>;
+		spi-max-frequency = <1000000>;
+	};
+};
+
+&spi3 {
+	status = "okay";
+	pinctrl-names = "default", "high_speed";
+	pinctrl-0 = <&spi3m1_cs0 &spi3m1_pins>;
+	pinctrl-1 = <&spi3m1_cs0 &spi3m1_pins_hs>;
+	dmas = <&dmac0 26>, <&dmac0 27>;
+	dma-names = "tx", "rx";
+	max-freq = <48000000>;
+
+	spidev@0 {
+		compatible = "rockchip,spidev";
+		reg = <0>;
+		spi-max-frequency = <1000000>;
+	};
+};
+
+&i2c2 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c2m0_xfer>;
+	clock-frequency = <800000>;
 };
