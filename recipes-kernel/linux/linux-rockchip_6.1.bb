@@ -8,7 +8,7 @@ SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=deve
            file://lttng.cfg \
            file://extlinux.conf \
            file://monitor.cfg \
-           file://0001-Add-Acropi-RK3566-DTS-and-update-Makefile.patch \
+           file://rk3566-acropi-lp4x.dts \
            "
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
@@ -41,6 +41,10 @@ do_deploy:append() {
 S = "${UNPACKDIR}/git"
 
 do_configure:append() {
+    cp ${UNPACKDIR}/rk3566-acropi-lp4x.dts ${S}/arch/arm64/boot/dts/rockchip/
+    if ! grep -q "rk3566-acropi-lp4x.dtb" ${S}/arch/arm64/boot/dts/rockchip/Makefile; then
+        sed -i "/rk3566-evb2-lp4x-v10.dtb/a dtb-\$(CONFIG_ARCH_ROCKCHIP) += rk3566-acropi-lp4x.dtb" ${S}/arch/arm64/boot/dts/rockchip/Makefile
+    fi
     if [ -f "${UNPACKDIR}/cpufreq.cfg" ]; then
         cat "${UNPACKDIR}/cpufreq.cfg" >> "${B}/.config"
     fi
