@@ -4,10 +4,8 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=6bc538ed5bd9a7fc9398086aedcd7e46"
 inherit kernel
 
 SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=develop-6.1 \
-           file://cpufreq.cfg \
-           file://lttng.cfg \
+           file://rk3566-acropi.cfg \
            file://extlinux.conf \
-           file://monitor.cfg \
            file://rk3566-acropi-lp4x.dts \
            "
 
@@ -45,13 +43,7 @@ do_configure:append() {
     if ! grep -q "rk3566-acropi-lp4x.dtb" ${S}/arch/arm64/boot/dts/rockchip/Makefile; then
         sed -i "/rk3566-evb2-lp4x-v10.dtb/a dtb-\$(CONFIG_ARCH_ROCKCHIP) += rk3566-acropi-lp4x.dtb" ${S}/arch/arm64/boot/dts/rockchip/Makefile
     fi
-    if [ -f "${UNPACKDIR}/cpufreq.cfg" ]; then
-        cat "${UNPACKDIR}/cpufreq.cfg" >> "${B}/.config"
-    fi
-    if [ -f "${UNPACKDIR}/lttng.cfg" ]; then
-        cat "${UNPACKDIR}/lttng.cfg" >> "${B}/.config"
-    fi
-    if [ -f "${UNPACKDIR}/monitor.cfg" ]; then
-        cat "${UNPACKDIR}/monitor.cfg" >> "${B}/.config"
+    if [ -f "${UNPACKDIR}/rk3566-acropi.cfg" ]; then
+        cat "${UNPACKDIR}/rk3566-acropi.cfg" >> "${B}/.config"
     fi
 }
