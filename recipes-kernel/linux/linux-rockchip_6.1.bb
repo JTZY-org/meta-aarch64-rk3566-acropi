@@ -46,4 +46,5 @@ do_configure:append() {
     if [ -f "${UNPACKDIR}/rk3566-acropi.cfg" ]; then
         cat "${UNPACKDIR}/rk3566-acropi.cfg" >> "${B}/.config"
     fi
+    sed -i '/MPP_GIT_REVISION :=/,/info")/c\MPP_GIT_REVISION := v1.0.0-acropi' ${S}/drivers/video/rockchip/mpp/Makefile
 }
