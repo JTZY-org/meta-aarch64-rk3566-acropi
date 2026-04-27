@@ -59,6 +59,60 @@
 		regulator-max-microvolt = <3300000>;
 		vin-supply = <&vcc5v0_sys>;
 	};
+
+	/* 1.8GHz Full Table (OTP Enabled) */
+	cpu0_opp_table: opp-table-0 {
+		compatible = "operating-points-v2";
+		opp-shared;
+
+		nvmem-cells = <&cpu_leakage>, <&core_pvtm>, <&mbist_vmin>, <&cpu_opp_info>,
+			      <&specification_serial_number>, <&remark_spec_serial_number>;
+		nvmem-cell-names = "leakage", "pvtm", "mbist-vmin", "opp-info",
+				   "specification_serial_number", "remark_spec_serial_number";
+		rockchip,supported-hw;
+
+		opp-408000000 {
+			opp-hz = /bits/ 64 <408000000>;
+			opp-microvolt = <850000 850000 1180000>;
+			clock-latency-ns = <40000>;
+		};
+
+		opp-600000000 {
+			opp-hz = /bits/ 64 <600000000>;
+			opp-microvolt = <850000 850000 1180000>;
+			clock-latency-ns = <40000>;
+		};
+
+		opp-816000000 {
+			opp-hz = /bits/ 64 <816000000>;
+			opp-microvolt = <850000 850000 1180000>;
+			clock-latency-ns = <40000>;
+		};
+
+		opp-1104000000 {
+			opp-hz = /bits/ 64 <1104000000>;
+			opp-microvolt = <900000 900000 1180000>;
+			clock-latency-ns = <40000>;
+		};
+
+		opp-1416000000 {
+			opp-hz = /bits/ 64 <1416000000>;
+			opp-microvolt = <1025000 1025000 1180000>;
+			clock-latency-ns = <40000>;
+		};
+
+		opp-1608000000 {
+			opp-hz = /bits/ 64 <1608000000>;
+			opp-microvolt = <1100000 1100000 1180000>;
+			clock-latency-ns = <40000>;
+		};
+
+		opp-1800000000 {
+			opp-hz = /bits/ 64 <1800000000>;
+			opp-microvolt = <1150000 1150000 1180000>;
+			clock-latency-ns = <40000>;
+		};
+	};
 };
 
 &power {
@@ -89,6 +143,25 @@
 	pinctrl-0 = <&i2c0_xfer>;
 	u-boot,dm-spl;
 
+	vdd_cpu: tcs4525@1c {
+		compatible = "tcs,tcs4525";
+		reg = <0x1c>;
+		vin-supply = <&vcc5v0_sys>;
+		regulator-compatible = "fan53555-reg";
+		regulator-name = "vdd_cpu";
+		regulator-min-microvolt = <712500>;
+		regulator-max-microvolt = <1180000>;
+		regulator-init-microvolt = <900000>;
+		regulator-ramp-delay = <2300>;
+		fcs,suspend-voltage-selector = <1>;
+		regulator-boot-on;
+		regulator-always-on;
+
+		regulator-state-mem {
+			regulator-off-in-suspend;
+		};
+	};
+
 	pmic: pmic@20 {
 		compatible = "rockchip,rk809";
 		reg = <0x20>;
@@ -115,8 +188,8 @@
 				regulator-name = "vdd_logic";
 				regulator-always-on;
 				regulator-boot-on;
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <1350000>;
+				regulator-min-microvolt = <900000>;
+				regulator-max-microvolt = <900000>;
 				regulator-ramp-delay = <6001>;
 				regulator-initial-mode = <0x2>;
 
@@ -129,8 +202,8 @@
 				regulator-name = "vdd_gpu";
 				regulator-always-on;
 				regulator-boot-on;
-				regulator-min-microvolt = <500000>;
-				regulator-max-microvolt = <1350000>;
+				regulator-min-microvolt = <900000>;
+				regulator-max-microvolt = <900000>;
 				regulator-ramp-delay = <6001>;
 				regulator-initial-mode = <0x2>;
 
@@ -155,7 +228,7 @@
 				regulator-always-on;
 				regulator-boot-on;
 				regulator-min-microvolt = <900000>;
-				regulator-max-microvolt = <1100000>;
+				regulator-max-microvolt = <900000>;
 				regulator-ramp-delay = <6001>;
 				regulator-initial-mode = <0x2>;
 
@@ -351,16 +424,36 @@
 	rockchip,hw-tshut-polarity = <0>;
 };
 
+&soc_thermal {
+	trips {
+		cpu_target: cpu-target {
+			temperature = <75000>;
+			hysteresis = <2000>;
+			type = "passive";
+		};
+	};
+
+	cooling-maps {
+		map0 {
+			trip = <&cpu_target>;
+			cooling-device = <&cpu0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+					 <&cpu3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+		};
+	};
+};
+
 &rknpu {
 	clocks = <&cru CLK_NPU>, <&cru ACLK_NPU>, <&cru HCLK_NPU>;
 	clock-names = "clk", "aclk", "hclk";
+	rknpu-supply = <&vdd_npu>;
 	interrupt-names = "npu_irq";
 	status = "okay";
 };
 
 &gpu {
 	mali-supply = <&vdd_gpu>;
-	shadercores-supply = <&vdd_gpu>;
 	status = "okay";
 };
 
@@ -668,6 +761,42 @@
 	clock-frequency = <800000>;
 };
 
+&cpu0 {
+	device_type = "cpu";
+	clocks = <&cru ARMCLK>;
+	cpu-supply = <&vdd_cpu>;
+	operating-points-v2 = <&cpu0_opp_table>;
+	#cooling-cells = <2>;
+	/delete-property/ cpu-idle-states;
+};
+
+&cpu1 {
+	device_type = "cpu";
+	clocks = <&cru ARMCLK>;
+	cpu-supply = <&vdd_cpu>;
+	operating-points-v2 = <&cpu0_opp_table>;
+	#cooling-cells = <2>;
+	/delete-property/ cpu-idle-states;
+};
+
+&cpu2 {
+	device_type = "cpu";
+	clocks = <&cru ARMCLK>;
+	cpu-supply = <&vdd_cpu>;
+	operating-points-v2 = <&cpu0_opp_table>;
+	#cooling-cells = <2>;
+	/delete-property/ cpu-idle-states;
+};
+
+&cpu3 {
+	device_type = "cpu";
+	clocks = <&cru ARMCLK>;
+	cpu-supply = <&vdd_cpu>;
+	operating-points-v2 = <&cpu0_opp_table>;
+	#cooling-cells = <2>;
+	/delete-property/ cpu-idle-states;
+};
+
 &uart0 {
 	status = "okay";
 	pinctrl-names = "default";
@@ -699,4 +828,3 @@
 	dmas = <&dmac0 6>, <&dmac0 7>;
 	dma-names = "tx", "rx";
 };
-

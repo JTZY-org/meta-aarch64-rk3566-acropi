@@ -7,15 +7,31 @@ SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=deve
            file://rk3566-acropi.cfg \
            file://extlinux.conf \
            file://rk3566-acropi-lp4x.dts \
+           file://patch-6.1.112-rt-final.patch \
            "
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
-
 KBUILD_DEFCONFIG = "rockchip_linux_defconfig"
-
 DEPENDS += "e2fsprogs-native u-boot-tools-native"
 INSANE_SKIP:${PN} += "buildpaths"
 INSANE_SKIP:${PN}-src += "buildpaths"
+
+S = "${UNPACKDIR}/git"
+
+do_configure:prepend() {
+    # 注入架构支持
+    sed -i "s/select ARCH_WANT_DEFAULT_BPF_JIT/select ARCH_WANT_DEFAULT_BPF_JIT\n\tselect ARCH_SUPPORTS_RT/g" ${S}/arch/arm64/Kconfig
+}
+
+do_configure:append() {
+    cp ${UNPACKDIR}/rk3566-acropi-lp4x.dts ${S}/arch/arm64/boot/dts/rockchip/
+    if ! grep -q "rk3566-acropi-lp4x.dtb" ${S}/arch/arm64/boot/dts/rockchip/Makefile; then
+        sed -i "/rk3566-evb2-lp4x-v10.dtb/a dtb-\$(CONFIG_ARCH_ROCKCHIP) += rk3566-acropi-lp4x.dtb" ${S}/arch/arm64/boot/dts/rockchip/Makefile
+    fi
+    if [ -f "${UNPACKDIR}/rk3566-acropi.cfg" ]; then
+        cat "${UNPACKDIR}/rk3566-acropi.cfg" >> "${B}/.config"
+    fi
+}
 
 do_deploy:append() {
     mkdir -p ${WORKDIR}/boot-image/boot
@@ -34,17 +50,4 @@ do_deploy:append() {
     mkfs.ext2 -F -d ${WORKDIR}/boot-image/boot ${DEPLOYDIR}/boot.img
     find ${DEPLOYDIR} -type f ! -name "boot.img" -delete
     find ${DEPLOYDIR} -type l -delete 
-}
-
-S = "${UNPACKDIR}/git"
-
-do_configure:append() {
-    cp ${UNPACKDIR}/rk3566-acropi-lp4x.dts ${S}/arch/arm64/boot/dts/rockchip/
-    if ! grep -q "rk3566-acropi-lp4x.dtb" ${S}/arch/arm64/boot/dts/rockchip/Makefile; then
-        sed -i "/rk3566-evb2-lp4x-v10.dtb/a dtb-\$(CONFIG_ARCH_ROCKCHIP) += rk3566-acropi-lp4x.dtb" ${S}/arch/arm64/boot/dts/rockchip/Makefile
-    fi
-    if [ -f "${UNPACKDIR}/rk3566-acropi.cfg" ]; then
-        cat "${UNPACKDIR}/rk3566-acropi.cfg" >> "${B}/.config"
-    fi
-    sed -i '/MPP_GIT_REVISION :=/,/info")/c\MPP_GIT_REVISION := v1.0.0-acropi' ${S}/drivers/video/rockchip/mpp/Makefile
 }
