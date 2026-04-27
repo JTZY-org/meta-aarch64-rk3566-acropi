@@ -203,7 +203,7 @@
 				regulator-always-on;
 				regulator-boot-on;
 				regulator-min-microvolt = <900000>;
-				regulator-max-microvolt = <900000>;
+				regulator-max-microvolt = <1000000>;
 				regulator-ramp-delay = <6001>;
 				regulator-initial-mode = <0x2>;
 
@@ -228,7 +228,7 @@
 				regulator-always-on;
 				regulator-boot-on;
 				regulator-min-microvolt = <900000>;
-				regulator-max-microvolt = <900000>;
+				regulator-max-microvolt = <1000000>;
 				regulator-ramp-delay = <6001>;
 				regulator-initial-mode = <0x2>;
 
@@ -454,7 +454,16 @@
 
 &gpu {
 	mali-supply = <&vdd_gpu>;
+	power-off-delay-ms = <200>;
 	status = "okay";
+
+	gpu_power_model: power-model {
+		compatible = "arm,mali-simple-power-model";
+		static-coefficient = <100000>;
+		dynamic-coefficient = <953>;
+		ts = <(-108890) 63610 (-1355) 20>;
+		thermal-zone = "gpu-thermal";
+	};
 };
 
 &sdhci {
@@ -537,6 +546,7 @@
 };
 
 &rkvenc {
+	// venc-supply = <&vdd_logic>;
 	status = "okay";
 };
 
