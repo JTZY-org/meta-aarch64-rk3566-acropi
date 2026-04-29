@@ -1,10 +1,10 @@
 SUMMARY = "Realtek 8812EU/8821EU USB WiFi driver"
 HOMEPAGE = "https://github.com/TSKangetsu/fvck-realtek-88x2eu"
 LICENSE = "GPL-2.0-only"
-LIC_FILES_CHKSUM = "file://Makefile;md5=cc9b8be92c48ef1f1b4afdf04d626216"
+LIC_FILES_CHKSUM = "file://Makefile;md5=00f9ddc9d340a150d147f135c87b388b"
 
-SRC_URI = "git://github.com/TSKangetsu/fvck-realtek-88x2eu.git;protocol=https;branch=master"
-SRCREV = "e5da2b7c907ff07c7adb21c9bc0c2b82786771e0"
+SRC_URI = "git://github.com/TSKangetsu/fvck-realtek-88x2eu.git;protocol=https;branch=test"
+SRCREV = "a1b634e79942cb469d3bf777c59269baa381f858"
 
 S = "${WORKDIR}/git"
 

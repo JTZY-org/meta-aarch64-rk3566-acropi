@@ -13,9 +13,10 @@ SRC_URI = " \
     file://adb-server \
     file://udhcpd.conf \
     file://migrate-irqs.sh \
+    file://files \
 "
 
-PACKAGES =+ "${PN}-usb ${PN}-net ${PN}-adb ${PN}-irq"
+PACKAGES =+ "${PN}-usb ${PN}-net ${PN}-adb ${PN}-irq ${PN}-overlay"
 INITSCRIPT_PACKAGES = "${PN}-usb ${PN}-net ${PN}-adb ${PN}-irq"
 
 INITSCRIPT_NAME:${PN}-usb = "usb-rndis"
@@ -34,6 +35,12 @@ do_install() {
     install -d ${D}${bindir}
     install -m 0755 ${UNPACKDIR}/usb-rndis-setup.sh ${D}${bindir}/usb-rndis-setup.sh
 
+    if [ -d ${UNPACKDIR}/files ]; then
+        cp -r ${UNPACKDIR}/files/* ${D}/
+        # Ensure scripts are executable
+        find ${D} -type f -name "*.sh" -exec chmod +x {} \;
+    fi
+
     install -d ${D}${sysconfdir}/init.d
     install -m 0755 ${UNPACKDIR}/usb-rndis-init ${D}${sysconfdir}/init.d/usb-rndis
     install -m 0755 ${UNPACKDIR}/usb-network    ${D}${sysconfdir}/init.d/usb-network
@@ -48,8 +55,9 @@ FILES:${PN}-usb = "${bindir}/usb-rndis-setup.sh ${sysconfdir}/init.d/usb-rndis"
 FILES:${PN}-net = "${sysconfdir}/init.d/usb-network ${sysconfdir}/udhcpd.conf"
 FILES:${PN}-adb = "${sysconfdir}/init.d/adb-server"
 FILES:${PN}-irq = "${sysconfdir}/init.d/migrate-irqs"
+FILES:${PN}-overlay = "/"
 
-RDEPENDS:${PN} += "${PN}-usb ${PN}-net ${PN}-adb ${PN}-irq"
+RDEPENDS:${PN} += "${PN}-usb ${PN}-net ${PN}-adb ${PN}-irq ${PN}-overlay"
 
 RDEPENDS:${PN}-usb += "busybox kernel-module-libcomposite kernel-module-u-ether kernel-module-usb-f-rndis"
 RDEPENDS:${PN}-net += "busybox"
