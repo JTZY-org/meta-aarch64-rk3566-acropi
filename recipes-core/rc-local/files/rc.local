@@ -1,0 +1,7 @@
+#!/bin/sh -e
+#
+# rc.local - 这里的命令会在启动完成时执行
+#
+echo "System is up, running rc.local..."
+
+exit 0

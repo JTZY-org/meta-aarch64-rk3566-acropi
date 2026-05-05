@@ -1,0 +1,24 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          rc.local
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Run /etc/rc.local
+### END INIT INFO
+
+case "$1" in
+    start)
+        if [ -x /etc/rc.local ]; then
+            /etc/rc.local
+        fi
+        ;;
+    stop|restart|reload)
+        # rc.local 通常不需要处理停止逻辑
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+        ;;
+esac
