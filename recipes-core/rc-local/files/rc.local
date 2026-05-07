@@ -4,4 +4,8 @@
 #
 echo "System is up, running rc.local..."
 
+v4l2-ctl -d /dev/v4l-subdev3 --set-subdev-fmt pad=0,width=640,height=480 &
+rkaiq_3A_server &
+RuAPM_Cli -b
+
 exit 0
