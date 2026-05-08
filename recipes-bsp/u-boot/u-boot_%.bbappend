@@ -82,8 +82,10 @@ do_deploy:append() {
     # 2. Deploy the loader using only its original Rockchip name
     install -m 644 ${B}/rk356x_spl_loader_*.bin ${DEPLOYDIR}/
 
-    # 3. Deploy parameter.txt - locate it dynamically in WORKDIR
-    if [ -f "${WORKDIR}/parameter.txt" ]; then
+    # 3. Deploy parameter.txt - locate it dynamically in WORKDIR/UNPACKDIR
+    if [ -f "${UNPACKDIR}/parameter.txt" ]; then
+        install -m 644 ${UNPACKDIR}/parameter.txt ${DEPLOYDIR}/parameter.txt
+    elif [ -f "${WORKDIR}/parameter.txt" ]; then
         install -m 644 ${WORKDIR}/parameter.txt ${DEPLOYDIR}/parameter.txt
     elif [ -f "${S}/../parameter.txt" ]; then
         install -m 644 ${S}/../parameter.txt ${DEPLOYDIR}/parameter.txt
