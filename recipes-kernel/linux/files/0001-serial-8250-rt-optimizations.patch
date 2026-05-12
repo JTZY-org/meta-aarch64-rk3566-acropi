@@ -1,0 +1,253 @@
+commit 221941d3496f949d1a3ab24c826b20712cb50eb8
+Author: TSKangetsu <x403070567@live.com>
+Date:   Sun May 10 19:40:34 2026 +0800
+
+serial: 8250: apply RT optimizations and force DMA for RK3566
+
+Upstream-Status: Inappropriate [custom RT optimization]
+
+diff --git a/drivers/tty/serial/8250/8250.h b/drivers/tty/serial/8250/8250.h
+index a1c9b0002550..70d8ab608959 100644
+--- a/drivers/tty/serial/8250/8250.h
++++ b/drivers/tty/serial/8250/8250.h
+@@ -11,6 +11,7 @@
+ #include <linux/serial_8250.h>
+ #include <linux/serial_reg.h>
+ #include <linux/dmaengine.h>
++#include <linux/printk.h>
+ 
+ #include "../serial_mctrl_gpio.h"
+ 
+@@ -169,6 +170,43 @@ static unsigned int __maybe_unused serial_icr_read(struct uart_8250_port *up,
+ 
+ void serial8250_clear_and_reinit_fifos(struct uart_8250_port *p);
+ 
++static inline int serial8250_in_IER(struct uart_8250_port *up)
++{
++	struct uart_port *port = &up->port;
++	unsigned long flags;
++	bool is_console;
++	int ier;
++
++	is_console = uart_console(port);
++
++	if (is_console)
++		printk_cpu_sync_get_irqsave(flags);
++
++	ier = serial_in(up, UART_IER);
++
++	if (is_console)
++		printk_cpu_sync_put_irqrestore(flags);
++
++	return ier;
++}
++
++static inline void serial8250_set_IER(struct uart_8250_port *up, int ier)
++{
++	struct uart_port *port = &up->port;
++	unsigned long flags;
++	bool is_console;
++
++	is_console = uart_console(port);
++
++	if (is_console)
++		printk_cpu_sync_get_irqsave(flags);
++
++	serial_out(up, UART_IER, ier);
++
++	if (is_console)
++		printk_cpu_sync_put_irqrestore(flags);
++}
++
+ static inline int serial_dl_read(struct uart_8250_port *up)
+ {
+ 	return up->dl_read(up);
+@@ -185,9 +223,10 @@ static inline bool serial8250_set_THRI(struct uart_8250_port *up)
+ 		return false;
+ 	up->ier |= UART_IER_THRI;
+ #if defined(CONFIG_ARCH_ROCKCHIP) && defined(CONFIG_NO_GKI)
+-	up->ier |= UART_IER_PTIME;
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT))
++		up->ier |= UART_IER_PTIME;
+ #endif
+-	serial_out(up, UART_IER, up->ier);
++	serial8250_set_IER(up, up->ier);
+ 	return true;
+ }
+ 
+@@ -199,7 +238,7 @@ static inline bool serial8250_clear_THRI(struct uart_8250_port *up)
+ #if defined(CONFIG_ARCH_ROCKCHIP) && defined(CONFIG_NO_GKI)
+ 	up->ier &= ~UART_IER_PTIME;
+ #endif
+-	serial_out(up, UART_IER, up->ier);
++	serial8250_set_IER(up, up->ier);
+ 	return true;
+ }
+ 
+diff --git a/drivers/tty/serial/8250/8250_dma.c b/drivers/tty/serial/8250/8250_dma.c
+index c3816168ab78..399cffa8fee7 100644
+--- a/drivers/tty/serial/8250/8250_dma.c
++++ b/drivers/tty/serial/8250/8250_dma.c
+@@ -10,13 +10,12 @@
+ #include <linux/dma-mapping.h>
+ 
+ #include "8250.h"
+-
+ #if defined(CONFIG_ARCH_ROCKCHIP) && defined(CONFIG_NO_GKI)
+-#define MAX_TX_BYTES		64
++#define MAX_TX_BYTES		1
++#endif
+ #define MAX_FIFO_SIZE		64
+ #define UART_RFL_16550A		0x21
+ #define DW_UART_DMASA		0x2a
+-#endif
+ 
+ static void __dma_tx_complete(void *param)
+ {
+diff --git a/drivers/tty/serial/8250/8250_dw.c b/drivers/tty/serial/8250/8250_dw.c
+index 88025c347b3a..5c738e1e82bd 100644
+--- a/drivers/tty/serial/8250/8250_dw.c
++++ b/drivers/tty/serial/8250/8250_dw.c
+@@ -120,6 +120,7 @@ static void dw8250_check_lcr(struct uart_port *p, int value)
+ 
+ 		dw8250_force_idle(p);
+ 
++		cpu_relax();
+ #ifdef CONFIG_64BIT
+ 		if (p->type == PORT_OCTEON)
+ 			__raw_writeq(value & 0xff, offset);
+diff --git a/drivers/tty/serial/8250/8250_port.c b/drivers/tty/serial/8250/8250_port.c
+index 47d601e0e657..93b1e06fcc22 100644
+--- a/drivers/tty/serial/8250/8250_port.c
++++ b/drivers/tty/serial/8250/8250_port.c
+@@ -767,12 +767,29 @@ static void serial8250_set_sleep(struct uart_8250_port *p, int sleep)
+ 	serial8250_rpm_put(p);
+ }
+ 
+-static void serial8250_clear_IER(struct uart_8250_port *up)
++static unsigned int serial8250_clear_IER(struct uart_8250_port *up)
+ {
++	struct uart_port *port = &up->port;
++	unsigned int clearval = 0;
++	unsigned long flags;
++	bool is_console;
++	unsigned int prior;
++
++	is_console = uart_console(port);
++
+ 	if (up->capabilities & UART_CAP_UUE)
+-		serial_out(up, UART_IER, UART_IER_UUE);
+-	else
+-		serial_out(up, UART_IER, 0);
++		clearval = UART_IER_UUE;
++
++	if (is_console)
++		printk_cpu_sync_get_irqsave(flags);
++
++	prior = serial_in(up, UART_IER);
++	serial_out(up, UART_IER, clearval);
++
++	if (is_console)
++		printk_cpu_sync_put_irqrestore(flags);
++
++	return prior;
+ }
+ 
+ #ifdef CONFIG_SERIAL_8250_RSA
+@@ -3495,6 +3512,40 @@ static void serial8250_console_fifo_write(struct uart_8250_port *up,
+ 	}
+ }
+ 
++static void serial8250_console_putchar_locked(struct uart_port *port, unsigned char ch)
++{
++	struct uart_8250_port *up = up_to_u8250p(port);
++
++	wait_for_lsr(up, UART_LSR_THRE);
++	serial_port_out(port, UART_TX, ch);
++}
++
++void serial8250_console_write_atomic(struct uart_8250_port *up,
++				     const char *s, unsigned int count)
++{
++	struct uart_port *port = &up->port;
++	unsigned long flags;
++	unsigned int ier;
++
++	printk_cpu_sync_get_irqsave(flags);
++
++	touch_nmi_watchdog();
++
++	ier = serial8250_clear_IER(up);
++
++	if (atomic_fetch_inc(&up->console_printing)) {
++		uart_console_write(port, "\n", 1,
++				   serial8250_console_putchar_locked);
++	}
++	uart_console_write(port, s, count, serial8250_console_putchar_locked);
++	atomic_dec(&up->console_printing);
++
++	wait_for_xmitr(up, UART_LSR_BOTH_EMPTY);
++	serial8250_set_IER(up, ier);
++
++	printk_cpu_sync_put_irqrestore(flags);
++}
++
+ /*
+  *	Print a string to the serial port trying not to disturb
+  *	any possible real use of the port...
+@@ -3523,8 +3574,7 @@ void serial8250_console_write(struct uart_8250_port *up, const char *s,
+ 	/*
+ 	 *	First save the IER then disable the interrupts
+ 	 */
+-	ier = serial_port_in(port, UART_IER);
+-	serial8250_clear_IER(up);
++	ier = serial8250_clear_IER(up);
+ 
+ 	/* check scratch reg to see if port powered off during system sleep */
+ 	if (up->canary && (up->canary != serial_port_in(port, UART_SCR))) {
+@@ -3558,10 +3608,12 @@ void serial8250_console_write(struct uart_8250_port *up, const char *s,
+ 		 */
+ 		!(up->port.flags & UPF_CONS_FLOW);
+ 
++	atomic_inc(&up->console_printing);
+ 	if (likely(use_fifo))
+ 		serial8250_console_fifo_write(up, s, count);
+ 	else
+ 		uart_console_write(port, s, count, serial8250_console_putchar);
++	atomic_dec(&up->console_printing);
+ 
+ 	/*
+ 	 *	Finally, wait for transmitter to become empty
+@@ -3575,7 +3627,7 @@ void serial8250_console_write(struct uart_8250_port *up, const char *s,
+ 			up->rs485_stop_tx(up);
+ 	}
+ 
+-	serial_port_out(port, UART_IER, ier);
++	serial8250_set_IER(up, ier);
+ 
+ 	/*
+ 	 *	The receive handling will happen properly because the
+@@ -3608,6 +3660,7 @@ static unsigned int probe_baud(struct uart_port *port)
+ 
+ int serial8250_console_setup(struct uart_port *port, char *options, bool probe)
+ {
++	struct uart_8250_port *up = up_to_u8250p(port);
+ 	int baud = 9600;
+ 	int bits = 8;
+ 	int parity = 'n';
+@@ -3617,10 +3670,13 @@ int serial8250_console_setup(struct uart_port *port, char *options, bool probe)
+ 	if (!port->iobase && !port->membase)
+ 		return -ENODEV;
+ 
+-	if (options)
++	atomic_set(&up->console_printing, 0);
++
++	if (options) {
+ 		uart_parse_options(options, &baud, &parity, &bits, &flow);
+-	else if (probe)
++	} else if (probe) {
+ 		baud = probe_baud(port);
++	}
+ 
+ 	ret = uart_set_options(port, port->cons, baud, parity, bits, flow);
+ 	if (ret)

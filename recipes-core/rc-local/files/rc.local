@@ -5,7 +5,9 @@
 echo "System is up, running rc.local..."
 
 v4l2-ctl -d /dev/v4l-subdev3 --set-subdev-fmt pad=0,width=640,height=480 &
-rkaiq_3A_server &
-RuAPM_Cli -b
+sleep 1
+tmux new-session -d -s aiq "/usr/bin/rkaiq_3A_server"
+sleep 4
+tmux new-session -d -s aps "/usr/bin/RuAPM_Cli"
 
 exit 0

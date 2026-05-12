@@ -8,6 +8,7 @@ SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=deve
            file://extlinux.conf \
            file://rk3566-acropi-lp4x.dts \
            file://patch-6.1.112-rt-final.patch \
+           file://0001-serial-8250-rt-optimizations.patch \
            "
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
@@ -48,6 +49,4 @@ do_deploy:append() {
     fi
     dd if=/dev/zero of=${DEPLOYDIR}/boot.img bs=1M count=64
     mkfs.ext2 -F -d ${WORKDIR}/boot-image/boot ${DEPLOYDIR}/boot.img
-    find ${DEPLOYDIR} -type f ! -name "boot.img" -delete
-    find ${DEPLOYDIR} -type l -delete 
 }
