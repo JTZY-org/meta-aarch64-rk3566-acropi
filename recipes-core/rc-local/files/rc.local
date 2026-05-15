@@ -1,13 +1,19 @@
 #!/bin/sh -e
-#
-# rc.local - 这里的命令会在启动完成时执行
-#
-echo "System is up, running rc.local..."
-
 v4l2-ctl -d /dev/v4l-subdev3 --set-subdev-fmt pad=0,width=640,height=480 &
-sleep 1
 tmux new-session -d -s aiq "/usr/bin/rkaiq_3A_server"
-sleep 4
+
+# aps cali
+if [ -f "/usr/bin/Ru_Calibrating" ]; then
+        chmod +x "/usr/bin/Ru_Calibrating"
+        /usr/bin/Ru_Calibrating
+        rm "/usr/bin/Ru_Calibrating"
+        reboot
+fi
+
+sleep 1
 tmux new-session -d -s aps "/usr/bin/RuAPM_Cli"
+sleep 2
+cpu-tool.sh set-freq 1104000 &
+migrate-irqs > /home/root/booted &
 
 exit 0
