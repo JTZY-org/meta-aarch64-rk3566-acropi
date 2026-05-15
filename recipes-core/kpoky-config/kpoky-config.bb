@@ -17,7 +17,7 @@ SRC_URI = " \
 
 INSANE_SKIP:${PN} += "already-stripped"
 
-PACKAGES =+ "${PN}-usb ${PN}-net ${PN}-adb ${PN}-overlay"
+PACKAGES =+ "${PN}-usb ${PN}-net ${PN}-adb"
 INITSCRIPT_PACKAGES = "${PN}-usb ${PN}-net ${PN}-adb"
 
 INITSCRIPT_NAME:${PN}-usb = "usb-rndis"
@@ -33,11 +33,8 @@ do_install() {
     install -d ${D}${bindir}
     install -m 0755 ${UNPACKDIR}/usb-rndis-setup.sh ${D}${bindir}/usb-rndis-setup.sh
 
-    if [ -d ${UNPACKDIR}/files ]; then
-        cp -r ${UNPACKDIR}/files/* ${D}/
-        # Ensure scripts are executable
-        find ${D} -type f -name "*.sh" -exec chmod +x {} \;
-    fi
+    # 注意：files/files 目录现在通过 kpoky.conf 中的 ROOTFS_POSTPROCESS_COMMAND 统一处理，
+    # 以实现最后的强制覆盖，避免与 nginx 等包冲突。
 
     install -d ${D}${sysconfdir}/init.d
     install -m 0755 ${UNPACKDIR}/usb-rndis-init ${D}${sysconfdir}/init.d/usb-rndis
@@ -51,9 +48,8 @@ do_install() {
 FILES:${PN}-usb = "${bindir}/usb-rndis-setup.sh ${sysconfdir}/init.d/usb-rndis"
 FILES:${PN}-net = "${sysconfdir}/init.d/usb-network ${sysconfdir}/udhcpd.conf"
 FILES:${PN}-adb = "${sysconfdir}/init.d/adb-server"
-FILES:${PN}-overlay = "/"
 
-RDEPENDS:${PN} += "${PN}-usb ${PN}-net ${PN}-adb ${PN}-overlay"
+RDEPENDS:${PN} += "${PN}-usb ${PN}-net ${PN}-adb"
 
 RDEPENDS:${PN}-usb += "busybox kernel-module-libcomposite kernel-module-u-ether kernel-module-usb-f-rndis"
 RDEPENDS:${PN}-net += "busybox"
