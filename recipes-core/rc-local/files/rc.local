@@ -10,10 +10,10 @@ if [ -f "/usr/bin/Ru_Calibrating" ]; then
         reboot
 fi
 
-sleep 1
+sleep 5
 tmux new-session -d -s aps "/usr/bin/RuAPM_Cli"
 sleep 2
 cpu-tool.sh set-freq 1104000 &
-migrate-irqs > /home/root/booted &
+migrate-irqs.sh > /home/root/booted &
 
 exit 0
