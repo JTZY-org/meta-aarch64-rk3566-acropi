@@ -1,0 +1,35 @@
+From: Gemini CLI <gemini-cli@google.com>
+Date: Sun, 17 May 2026 16:05:00 +0800
+Subject: [PATCH] serial: 8250: silence rockchip-specific error prints
+
+Permanently remove redundant pr_err calls in serial8250_handle_irq
+that trigger on every frame error. This prevents console spam and
+performance degradation on RK3566 when UART clock sync issues occur.
+
+Upstream-Status: Inappropriate [Rockchip-specific workaround]
+Signed-off-by: Gemini CLI <gemini-cli@google.com>
+
+diff --git a/drivers/tty/serial/8250/8250_port.c b/drivers/tty/serial/8250/8250_port.c
+index 47d601e0e657..f765eb0c6470 100644
+--- a/drivers/tty/serial/8250/8250_port.c
++++ b/drivers/tty/serial/8250/8250_port.c
+@@ -2012,18 +2012,7 @@ int serial8250_handle_irq(struct uart_port *port, unsigned int iir)
+ 
+ #ifdef CONFIG_ARCH_ROCKCHIP
+ 	if (status & UART_LSR_BRK_ERROR_BITS) {
+-
+-		if (status & UART_LSR_OE)
+-			pr_err("%s: Overrun error!\n", port->name);
+-		if (status & UART_LSR_PE)
+-			pr_err("%s: Parity error!\n", port->name);
+-		if (status & UART_LSR_FE)
+-			pr_err("%s: Frame error!\n", port->name);
+-		if (status & UART_LSR_BI)
+-			pr_err("%s: Break interrupt!\n", port->name);
+-
+-		pr_err("%s: maybe rx pin is low or baudrate is not correct!\n",
+-			port->name);
++		/* Silence excessive Rockchip UART error logging */
+ 	}
+ #endif
+ 	uart_unlock_and_check_sysrq_irqrestore(port, flags);

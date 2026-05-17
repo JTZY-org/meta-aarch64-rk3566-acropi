@@ -9,6 +9,7 @@ SRC_URI = "git://github.com/rockchip-linux/kernel.git;protocol=https;branch=deve
            file://rk3566-acropi-lp4x.dts \
            file://patch-6.1.112-rt-final.patch \
            file://0001-serial-8250-rt-optimizations.patch \
+           file://0001-serial-8250-silence-rockchip-specific-error-prints.patch \
            "
 
 SRCREV = "d2b4477a1df699e6639e83837c7dc45ea1d1d73f"
