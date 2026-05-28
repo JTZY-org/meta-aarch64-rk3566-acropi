@@ -749,7 +749,7 @@
 };
 
 &spi3 {
-	status = "okay";
+	status = "disabled";
 	pinctrl-names = "default", "high_speed";
 	pinctrl-0 = <&spi3m1_cs0 &spi3m1_pins>;
 	pinctrl-1 = <&spi3m1_cs0 &spi3m1_pins_hs>;
@@ -827,8 +827,6 @@
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart2m0_xfer>;
-	dmas = <&dmac0 4>, <&dmac0 5>;
-	dma-names = "tx", "rx";
 };
 
 &uart3 {

@@ -15,5 +15,6 @@ tmux new-session -d -s aps "/usr/bin/RuAPM_Cli"
 sleep 2
 cpu-tool.sh set-freq 1104000 &
 migrate-irqs.sh > /home/root/booted &
+echo 900000000 > /sys/class/devfreq/fde40000.npu/min_freq & # avoid power set
 
 exit 0

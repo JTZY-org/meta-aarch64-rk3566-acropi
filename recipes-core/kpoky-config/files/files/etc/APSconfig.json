@@ -242,7 +242,7 @@
         "BroadcastInterfaces": [
             "wlan0"
         ],
-        "COM_APMTelCastEnable": false,
+        "COM_APMTelCastEnable": true,
         "COM_BroadCastBitRate": 5000000,
         "COM_BroadCastEnable": true,
         "COM_BroadCastPFrameSize": 120,
