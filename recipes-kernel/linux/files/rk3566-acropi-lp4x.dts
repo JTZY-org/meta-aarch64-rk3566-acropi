@@ -427,7 +427,7 @@
 &soc_thermal {
 	trips {
 		cpu_target: cpu-target {
-			temperature = <75000>;
+			temperature = <85000>;
 			hysteresis = <2000>;
 			type = "passive";
 		};
