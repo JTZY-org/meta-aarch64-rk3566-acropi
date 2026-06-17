@@ -13,6 +13,13 @@ inherit cmake
 
 DEPENDS = "libdrm coreutils-native vim-native m4-native"
 
+do_configure:prepend() {
+    # Uncomment subdirectories in root CMakeLists.txt to build rkaiq_tool_server, rkisp_demo, and rkisp_parser_demo
+    sed -i 's/#\s*add_subdirectory(rkaiq_tool_server)/add_subdirectory(rkaiq_tool_server)/g' ${S}/CMakeLists.txt
+    #sed -i 's/#\s*add_subdirectory(rkisp_demo)/add_subdirectory(rkisp_demo)/g' ${S}/CMakeLists.txt
+    #sed -i 's/#\s*add_subdirectory(rkisp_parser_demo)/add_subdirectory(rkisp_parser_demo)/g' ${S}/CMakeLists.txt
+}
+
 do_install:append() {
     # Remove init scripts to prevent auto-start as requested by user
     rm -rf ${D}${sysconfdir}

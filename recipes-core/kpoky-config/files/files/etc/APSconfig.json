@@ -5,7 +5,7 @@
             "BBC_PInterval": "1/2",
             "ESC_Freqeuncy": 800,
             "EnableUnlock_Protection": true,
-            "GPSDeviceBandrate": 38400,
+            "GPSDeviceBandrate": 115200,
             "IMU_Freqeuncy": 2000,
             "MPU9250_Type": 1,
             "RC_Type": 2,
@@ -274,7 +274,7 @@
                 "DeviceIFormat": "NV12",
                 "DevicePATH": "/dev/video0",
                 "DeviceWidth": 640,
-                "EnableDMAPassThrough": false,
+                "EnableDMAPassThrough": true,
                 "MaxBufferSize": 4,
                 "enable": true,
                 "subdev": [

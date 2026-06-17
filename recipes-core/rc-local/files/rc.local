@@ -1,6 +1,7 @@
 #!/bin/sh -e
 v4l2-ctl -d /dev/v4l-subdev3 --set-subdev-fmt pad=0,width=640,height=480 &
 tmux new-session -d -s aiq "/usr/bin/rkaiq_3A_server"
+tmux new-session -d -s ais "/usr/bin/rkaiq_tool_server"
 
 # aps cali
 if [ -f "/usr/bin/Ru_Calibrating" ]; then
@@ -10,7 +11,7 @@ if [ -f "/usr/bin/Ru_Calibrating" ]; then
         reboot
 fi
 
-sleep 5
+sleep 2
 tmux new-session -d -s aps "/usr/bin/RuAPM_Cli"
 sleep 2
 cpu-tool.sh set-freq 1104000 &
