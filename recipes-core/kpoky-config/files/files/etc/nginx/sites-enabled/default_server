@@ -16,5 +16,21 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
+    location = /blackbox.bbl {
+        alias /usr/log/Singleflight/SingleflightBlackBox.BBL;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, HEAD, OPTIONS';
+            add_header 'Access-Control-Allow-Headers' 'Content-Type';
+            return 204;
+        }
+
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header Content-Type "application/octet-stream";
+        add_header Content-Disposition "attachment; filename=\"SingleflightBlackBox.BBL\"";
+        add_header Cache-Control "no-store, no-cache, must-revalidate, max-age=0";
+    }
+
     error_page 500 502 503 504 /50x.html;
 }
