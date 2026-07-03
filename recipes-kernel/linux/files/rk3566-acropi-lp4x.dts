@@ -16,55 +16,57 @@
 	model = "Acropi RK3566 Board";
 	compatible = "rockchip,rk3566-acropi", "rockchip,rk3566";
 
-	// backlight: backlight {
-	// 	compatible = "pwm-backlight";
-	// 	pwms = <&pwm4 0 25000 0>;
-	// 	brightness-levels = <
-	// 		  0   4   8  12  16  20  24  28
-	// 		 32  36  40  44  48  52  56  60
-	// 		 64  68  72  76  80  84  88  92
-	// 		 96 100 104 108 112 116 120 124
-	// 		128 132 136 140 144 148 152 156
-	// 		160 164 168 172 176 180 184 188
-	// 		192 196 200 204 208 212 216 220
-	// 		224 228 232 236 240 244 248 252
-	// 		255
-	// 	>;
-	// 	default-brightness-level = <200>;
-	// };
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pwm4 0 25000 0>;
+		brightness-levels = <
+			  0   4   8  12  16  20  24  28
+			 32  36  40  44  48  52  56  60
+			 64  68  72  76  80  84  88  92
+			 96 100 104 108 112 116 120 124
+			128 132 136 140 144 148 152 156
+			160 164 168 172 176 180 184 188
+			192 196 200 204 208 212 216 220
+			224 228 232 236 240 244 248 252
+			255
+		>;
+		default-brightness-level = <200>;
+	};
 
-	// panel_edp: panel-edp {
-	// 	compatible = "simple-panel";
-	// 	backlight = <&backlight>;
-	// 	power-supply = <&vcc3v3_sys>;
-	// 	enable-gpios = <&gpio0 RK_PA6 GPIO_ACTIVE_HIGH>;
-	// 	prepare-delay-ms = <120>;
-	// 	enable-delay-ms = <120>;
-	// 	pinctrl-names = "default";
-	// 	pinctrl-0 = <&edp_en_gpio>;
+	panel_edp: panel-edp {
+		compatible = "simple-panel";
+		backlight = <&backlight>;
+		power-supply = <&vcc3v3_sys>;
+		enable-gpios = <&gpio0 RK_PA6 GPIO_ACTIVE_HIGH>;
+		prepare-delay-ms = <120>;
+		enable-delay-ms = <120>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&edp_en_gpio>;
+		connector-type = <14>; /* DRM_MODE_CONNECTOR_eDP */
+		bpc = <8>;
 
-	// 	panel-timing {
-	// 		clock-frequency = <150000000>;
-	// 		hactive = <1920>;
-	// 		vactive = <1080>;
-	// 		hfront-porch = <150>;
-	// 		hsync-len = <5>;
-	// 		hback-porch = <5>;
-	// 		vfront-porch = <3>;
-	// 		vsync-len = <1>;
-	// 		vback-porch = <9>;
-	// 		hsync-active = <0>;
-	// 		vsync-active = <0>;
-	// 		de-active = <0>;
-	// 		pixelclk-active = <0>;
-	// 	};
+		panel-timing {
+			clock-frequency = <150000000>;
+			hactive = <1920>;
+			vactive = <1080>;
+			hfront-porch = <150>;
+			hsync-len = <5>;
+			hback-porch = <5>;
+			vfront-porch = <3>;
+			vsync-len = <1>;
+			vback-porch = <9>;
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <0>;
+			pixelclk-active = <0>;
+		};
 
-	// 	port {
-	// 		panel_in_edp: endpoint {
-	// 			remote-endpoint = <&edp_out_panel>;
-	// 		};
-	// 	};
-	// };
+		port {
+			panel_in_edp: endpoint {
+				remote-endpoint = <&edp_out_panel>;
+			};
+		};
+	};
 
 	aliases {
 		mmc0 = &sdhci;
@@ -451,17 +453,17 @@
 		};
 	};
 
-	// edp {
-	// 	edp_en_gpio: edp-en-gpio {
-	// 		rockchip,pins = <0 RK_PA6 RK_FUNC_GPIO &pcfg_pull_none>;
-	// 	};
-	// };
+	edp {
+		edp_en_gpio: edp-en-gpio {
+			rockchip,pins = <0 RK_PA6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 
-	// lcd {
-	// 	lcd0_rst_gpio: lcd0-rst-gpio {
-	// 		rockchip,pins = <4 RK_PC5 RK_FUNC_GPIO &pcfg_pull_none>;
-	// 	};
-	// };
+	lcd {
+		lcd0_rst_gpio: lcd0-rst-gpio {
+			rockchip,pins = <4 RK_PC5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 };
 
 &pmu_io_domains {
@@ -899,82 +901,107 @@
 	dma-names = "tx", "rx";
 };
 
-// &pwm4 {
-// 	status = "okay";
-// };
+&pwm4 {
+	status = "okay";
+};
 
-// &edp {
-// 	force-hpd;
-// 	status = "okay";
+&edp {
+	force-hpd;
+	status = "okay";
 
-// 	ports {
-// 		port@1 {
-// 			reg = <1>;
-// 			edp_out_panel: endpoint {
-// 				remote-endpoint = <&panel_in_edp>;
-// 			};
-// 		};
-// 	};
-// };
+	ports {
+		port@1 {
+			reg = <1>;
+			edp_out_panel: endpoint {
+				remote-endpoint = <&panel_in_edp>;
+			};
+		};
+	};
+};
 
-// &edp_phy {
-// 	status = "okay";
-// };
+&edp_phy {
+	status = "okay";
+};
 
-// &edp_in_vp1 {
-// 	status = "okay";
-// };
+&edp_in_vp1 {
+	status = "okay";
+};
 
-// &route_edp {
-// 	connect = <&vp1_out_edp>;
-// 	status = "okay";
-// };
+&route_edp {
+	connect = <&vp1_out_edp>;
+	status = "okay";
+};
 
-// &dsi0 {
-// 	status = "okay";
+&dsi0 {
+	status = "okay";
 
-// 	panel@0 {
-// 		compatible = "simple-panel-dsi";
-// 		reg = <0>;
-// 		backlight = <&backlight>;
-// 		power-supply = <&vcc3v3_sys>;
-// 		reset-gpios = <&gpio4 RK_PC5 GPIO_ACTIVE_LOW>;
-// 		prepare-delay-ms = <20>;
-// 		enable-delay-ms = <20>;
-// 		pinctrl-names = "default";
-// 		pinctrl-0 = <&lcd0_rst_gpio>;
+	ports {
+		port@1 {
+			reg = <1>;
+			dsi0_out_panel: endpoint {
+				remote-endpoint = <&panel_in_dsi>;
+			};
+		};
+	};
 
-// 		dsi,format = <0>; /* MIPI_DSI_FMT_RGB888 */
-// 		dsi,lanes = <4>;
+	panel@0 {
+		compatible = "simple-panel-dsi";
+		reg = <0>;
+		backlight = <&backlight>;
+		power-supply = <&vcc3v3_sys>;
+		reset-gpios = <&gpio4 RK_PC5 GPIO_ACTIVE_LOW>;
+		prepare-delay-ms = <20>;
+		enable-delay-ms = <20>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd0_rst_gpio>;
+		bpc = <8>;
 
-// 		panel-timing {
-// 			clock-frequency = <68000000>;
-// 			hactive = <800>;
-// 			vactive = <1280>;
-// 			hback-porch = <30>;
-// 			hfront-porch = <30>;
-// 			vback-porch = <4>;
-// 			vfront-porch = <2>;
-// 			hsync-len = <4>;
-// 			vsync-len = <2>;
-// 			hsync-active = <0>;
-// 			vsync-active = <0>;
-// 			de-active = <0>;
-// 			pixelclk-active = <0>;
-// 		};
-// 	};
-// };
+		dsi,format = <0>; /* MIPI_DSI_FMT_RGB888 */
+		dsi,lanes = <4>;
 
-// &video_phy0 {
-// 	status = "okay";
-// };
+		panel-timing {
+			clock-frequency = <68000000>;
+			hactive = <800>;
+			vactive = <1280>;
+			hback-porch = <30>;
+			hfront-porch = <30>;
+			vback-porch = <4>;
+			vfront-porch = <2>;
+			hsync-len = <4>;
+			vsync-len = <2>;
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <0>;
+			pixelclk-active = <0>;
+		};
 
-// &dsi0_in_vp0 {
-// 	status = "okay";
-// };
+		port {
+			panel_in_dsi: endpoint {
+				remote-endpoint = <&dsi0_out_panel>;
+			};
+		};
+	};
+};
 
-// &route_dsi0 {
-// 	connect = <&vp0_out_dsi0>;
-// 	status = "okay";
-// };
+&video_phy0 {
+	status = "okay";
+};
+
+&dsi0_in_vp0 {
+	status = "okay";
+};
+
+&route_dsi0 {
+	connect = <&vp0_out_dsi0>;
+	status = "okay";
+};
+
+&vop {
+	status = "okay";
+};
+
+&vop_mmu {
+	status = "okay";
+};
+
 

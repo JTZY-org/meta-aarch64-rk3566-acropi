@@ -1,4 +1,8 @@
 #!/bin/sh -e
+
+# mv /dev/dri/renderD128 /dev/dri/renderD128_disabled
+# mv /dev/dma_heap /dev/dma_heap_disabled
+
 v4l2-ctl -d /dev/v4l-subdev3 --set-subdev-fmt pad=0,width=640,height=480 &
 tmux new-session -d -s aiq "/usr/bin/rkaiq_3A_server"
 tmux new-session -d -s ais "/usr/bin/rkaiq_tool_server"
@@ -13,6 +17,7 @@ fi
 
 sleep 2
 tmux new-session -d -s aps "/usr/bin/RuAPM_Cli"
+#tmux new-session -d -s sin "sinffer wlan0 RuAPS_BEACON_5AEC HT20 5825"
 sleep 2
 cpu-tool.sh set-freq 1104000 &
 migrate-irqs.sh > /home/root/booted &
