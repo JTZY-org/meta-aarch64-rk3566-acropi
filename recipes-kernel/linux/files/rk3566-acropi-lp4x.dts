@@ -19,18 +19,17 @@
 	backlight: backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pwm4 0 25000 0>;
-		brightness-levels = <
-			  0   4   8  12  16  20  24  28
-			 32  36  40  44  48  52  56  60
-			 64  68  72  76  80  84  88  92
-			 96 100 104 108 112 116 120 124
-			128 132 136 140 144 148 152 156
-			160 164 168 172 176 180 184 188
-			192 196 200 204 208 212 216 220
-			224 228 232 236 240 244 248 252
-			255
-		>;
-		default-brightness-level = <200>;
+		brightness-levels = <0 4 8 12 16 20 24 28
+				     32 36 40 44 48 52 56 60
+				     64 68 72 76 80 84 88 92
+				     96 100 104 108 112 116 120 124
+				     128 132 136 140 144 148 152 156
+				     160 164 168 172 176 180 184 188
+				     192 196 200 204 208 212 216 220
+				     224 228 232 236 240 244 248 252
+				     255>;
+		default-brightness-level = <50>;
+		power-supply = <&vcc3v3_sys>;
 	};
 
 	panel_edp: panel-edp {
@@ -49,16 +48,29 @@
 			clock-frequency = <150000000>;
 			hactive = <1920>;
 			vactive = <1080>;
-			hfront-porch = <150>;
-			hsync-len = <5>;
-			hback-porch = <5>;
+			hfront-porch = <48>;
+			hsync-len = <32>;
+			hback-porch = <200>;
 			vfront-porch = <3>;
-			vsync-len = <1>;
-			vback-porch = <9>;
+			vsync-len = <6>;
+			vback-porch = <51>;
 			hsync-active = <0>;
 			vsync-active = <0>;
 			de-active = <0>;
 			pixelclk-active = <0>;
+			// clock-frequency = <150000000>;
+			// hactive = <1920>;
+			// vactive = <1080>;
+			// hfront-porch = <48>;
+			// hsync-len = <32>;
+			// hback-porch = <200>;
+			// vfront-porch = <3>;
+			// vsync-len = <6>;
+			// vback-porch = <51>;
+			// hsync-active = <0>;
+			// vsync-active = <0>;
+			// de-active = <0>;
+			// pixelclk-active = <0>;
 		};
 
 		port {
@@ -85,11 +97,20 @@
 		#size-cells = <2>;
 		ranges;
 
-		isp_reserved: isp-reserved {
+		/* Dedicated default CMA pool for general devices like MPP, restricted to low physical memory (< 4GB) */
+		default_cma: default-cma {
 			compatible = "shared-dma-pool";
 			reusable;
 			linux,cma-default;
-			size = <0x0 0x10000000>;
+			size = <0x0 0x8000000>; /* 128 MB */
+			alloc-ranges = <0x0 0x0 0x0 0xf0000000>; /* Restricted to under 3.75 GB */
+		};
+
+		/* Dedicated private CMA pool for ISP */
+		isp_reserved: isp-reserved {
+			compatible = "shared-dma-pool";
+			reusable;
+			size = <0x0 0x10000000>; /* 256 MB */
 		};
 	};
 
@@ -912,6 +933,7 @@
 	ports {
 		port@1 {
 			reg = <1>;
+
 			edp_out_panel: endpoint {
 				remote-endpoint = <&panel_in_edp>;
 			};
@@ -933,70 +955,72 @@
 };
 
 &dsi0 {
-	status = "okay";
+	status = "disabled";
 
-	ports {
-		port@1 {
-			reg = <1>;
-			dsi0_out_panel: endpoint {
-				remote-endpoint = <&panel_in_dsi>;
-			};
-		};
-	};
+	// ports {
+	// 	port@1 {
+	// 		reg = <1>;
+	// 		dsi0_out_panel: endpoint {
+	// 			remote-endpoint = <&panel_in_dsi>;
+	// 		};
+	// 	};
+	// };
 
-	panel@0 {
-		compatible = "simple-panel-dsi";
-		reg = <0>;
-		backlight = <&backlight>;
-		power-supply = <&vcc3v3_sys>;
-		reset-gpios = <&gpio4 RK_PC5 GPIO_ACTIVE_LOW>;
-		prepare-delay-ms = <20>;
-		enable-delay-ms = <20>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&lcd0_rst_gpio>;
-		bpc = <8>;
+	// panel@0 {
+	// 	compatible = "simple-panel-dsi";
+	// 	reg = <0>;
+	// 	backlight = <&backlight>;
+	// 	power-supply = <&vcc3v3_sys>;
+	// 	reset-gpios = <&gpio4 RK_PC5 GPIO_ACTIVE_LOW>;
+	// 	prepare-delay-ms = <20>;
+	// 	enable-delay-ms = <20>;
+	// 	pinctrl-names = "default";
+	// 	pinctrl-0 = <&lcd0_rst_gpio>;
+	// 	bpc = <8>;
 
-		dsi,format = <0>; /* MIPI_DSI_FMT_RGB888 */
-		dsi,lanes = <4>;
+	// 	dsi,format = <0>; /* MIPI_DSI_FMT_RGB888 */
+	// 	dsi,lanes = <4>;
 
-		panel-timing {
-			clock-frequency = <68000000>;
-			hactive = <800>;
-			vactive = <1280>;
-			hback-porch = <30>;
-			hfront-porch = <30>;
-			vback-porch = <4>;
-			vfront-porch = <2>;
-			hsync-len = <4>;
-			vsync-len = <2>;
-			hsync-active = <0>;
-			vsync-active = <0>;
-			de-active = <0>;
-			pixelclk-active = <0>;
-		};
+	// 	panel-timing {
+	// 		clock-frequency = <68000000>;
+	// 		hactive = <800>;
+	// 		vactive = <1280>;
+	// 		hback-porch = <30>;
+	// 		hfront-porch = <30>;
+	// 		vback-porch = <4>;
+	// 		vfront-porch = <2>;
+	// 		hsync-len = <4>;
+	// 		vsync-len = <2>;
+	// 		hsync-active = <0>;
+	// 		vsync-active = <0>;
+	// 		de-active = <0>;
+	// 		pixelclk-active = <0>;
+	// 	};
 
-		port {
-			panel_in_dsi: endpoint {
-				remote-endpoint = <&dsi0_out_panel>;
-			};
-		};
-	};
+	// 	port {
+	// 		panel_in_dsi: endpoint {
+	// 			remote-endpoint = <&dsi0_out_panel>;
+	// 		};
+	// 	};
+	// };
 };
 
 &video_phy0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &dsi0_in_vp0 {
-	status = "okay";
+	status = "disabled";
 };
 
 &route_dsi0 {
-	connect = <&vp0_out_dsi0>;
-	status = "okay";
+	// connect = <&vp0_out_dsi0>;
+	status = "disabled";
 };
 
 &vop {
+	assigned-clocks = <&cru DCLK_VOP0>, <&cru DCLK_VOP1>;
+	assigned-clock-parents = <&cru PLL_GPLL>, <&cru PLL_VPLL>;
 	status = "okay";
 };
 
