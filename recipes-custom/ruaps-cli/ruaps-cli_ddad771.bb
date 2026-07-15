@@ -1,7 +1,7 @@
 SUMMARY = "APS CLI and calibration tools"
 LICENSE = "CLOSED"
 
-SRC_URI = "file://ruaps_cli_91a0c53_aarch64.deb;subdir=${BP}"
+SRC_URI = "file://ruaps_cli_ddad771_aarch64.deb;subdir=${BP}"
 
 inherit bin_package
 

@@ -1,0 +1,46 @@
+#!/bin/sh
+set -e
+
+OTA_IMAGE=$1
+
+if [ -z "$OTA_IMAGE" ] || [ ! -f "$OTA_IMAGE" ]; then
+    echo "Usage: $0 <path_to_rootfs.squashfs>"
+    exit 1
+fi
+
+echo "=== 1. Prepare temporary RAM root ==="
+RAMROOT="/tmp/ramroot"
+mkdir -p $RAMROOT
+mount -t tmpfs tmpfs $RAMROOT
+mkdir -p $RAMROOT/bin $RAMROOT/sbin $RAMROOT/lib $RAMROOT/usr $RAMROOT/proc $RAMROOT/sys $RAMROOT/dev $RAMROOT/tmp
+
+for bin in busybox dd reboot mount umount sync sleep sh; do
+    cp -a $(which $bin) $RAMROOT/bin/ 2>/dev/null || true
+done
+cp -a /lib/* $RAMROOT/lib/ 2>/dev/null || true
+
+mv "$OTA_IMAGE" $RAMROOT/tmp/new_rootfs.squashfs
+
+echo "=== 2. Bind API filesystems ==="
+mount --make-rprivate /
+mount --bind /proc $RAMROOT/proc
+mount --bind /sys $RAMROOT/sys
+mount --bind /dev $RAMROOT/dev
+
+echo "=== 3. Pivot root to RAM ==="
+cd $RAMROOT
+mkdir -p oldroot
+pivot_root . oldroot
+
+echo "=== 4. Flash and reboot ==="
+exec chroot . sh -c '
+    umount -l /oldroot/overlay 2>/dev/null || true
+    umount -l /oldroot 2>/dev/null || true
+    
+    echo "Writing new SquashFS to /dev/mmcblk0p4..."
+    dd if=/tmp/new_rootfs.squashfs of=/dev/mmcblk0p4 bs=1M
+    sync
+    
+    echo "OTA upgrade successful. Rebooting now..."
+    reboot -f
+'

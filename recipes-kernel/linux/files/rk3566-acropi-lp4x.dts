@@ -45,19 +45,6 @@
 		bpc = <8>;
 
 		panel-timing {
-			clock-frequency = <150000000>;
-			hactive = <1920>;
-			vactive = <1080>;
-			hfront-porch = <48>;
-			hsync-len = <32>;
-			hback-porch = <200>;
-			vfront-porch = <3>;
-			vsync-len = <6>;
-			vback-porch = <51>;
-			hsync-active = <0>;
-			vsync-active = <0>;
-			de-active = <0>;
-			pixelclk-active = <0>;
 			// clock-frequency = <150000000>;
 			// hactive = <1920>;
 			// vactive = <1080>;
@@ -71,6 +58,19 @@
 			// vsync-active = <0>;
 			// de-active = <0>;
 			// pixelclk-active = <0>;
+			clock-frequency = <150000000>;
+			hactive = <1920>;
+			vactive = <1080>;
+			hfront-porch = <48>;      /* Restore standard typical value */
+			hsync-len = <32>;         /* Restore standard typical value */
+			hback-porch = <200>;      /* Typical 200 pixels, providing ample sample preparation time for TCON */
+			vfront-porch = <3>;       /* Keep at 3 */
+			vsync-len = <6>;          /* Restore typical value 6 */
+			vback-porch = <36>;       /* Set to 36, Vtotal = 1125, within specifications safety range 1112~1238 */
+			hsync-active = <0>;
+			vsync-active = <0>;
+			de-active = <0>;          /* Fixed: DE signal active high */
+			pixelclk-active = <0>;
 		};
 
 		port {

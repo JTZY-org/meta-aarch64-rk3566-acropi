@@ -1,0 +1,48 @@
+#!/bin/sh
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+# Mount virtual filesystems for bootstrap mounting actions
+mount -t proc proc /proc
+mount -t sysfs sys /sys
+mount -t devtmpfs devtmpfs /dev 2>/dev/null
+
+mkdir -p /mnt/rom
+mkdir -p /mnt/overlay
+mkdir -p /new_root
+
+# Bind-mount current read-only root / to /mnt/rom as clean lowerdir for OverlayFS
+mount --bind / /mnt/rom
+
+# Mount writable data partition /dev/mmcblk0p5 (data)
+# Automatically format if the partition is not formatted
+if ! mount -t ext4 /dev/mmcblk0p5 /mnt/overlay 2>/dev/null; then
+    echo "Formating overlay data partition /dev/mmcblk0p5 with ext4..."
+    mkfs.ext4 -F /dev/mmcblk0p5
+    mount -t ext4 /dev/mmcblk0p5 /mnt/overlay
+fi
+
+# Check and execute online partition resizing at boot (auto-grow partition)
+if [ -x /sbin/resize2fs ]; then
+    e2fsck -y /dev/mmcblk0p5 >/dev/null 2>&1 || true
+    resize2fs /dev/mmcblk0p5 >/dev/null 2>&1 || true
+fi
+
+# Create upper and work directories required for OverlayFS
+mkdir -p /mnt/overlay/upper
+mkdir -p /mnt/overlay/work
+
+# Perform rootfs OverlayFS mounting, using read-only /mnt/rom as lower, and ext4 upper as writeable layer
+mount -t overlay overlay -o lowerdir=/mnt/rom,upperdir=/mnt/overlay/upper,workdir=/mnt/overlay/work /new_root
+
+# Move mount points to the new root namespace to ensure subsequent initialization succeeds
+mkdir -p /new_root/rom
+mkdir -p /new_root/overlay
+mount --move /mnt/overlay /new_root/overlay
+mount --move /sys /new_root/sys
+mount --move /proc /new_root/proc
+mount --move /dev /new_root/dev
+
+# Pivot Root and hand over control to the real init
+cd /new_root
+pivot_root . rom
+exec chroot . /sbin/init.real "$@"

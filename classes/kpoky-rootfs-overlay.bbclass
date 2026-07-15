@@ -4,30 +4,77 @@
 # It copies files from the meta layer's permanent overlay directory
 # to the image rootfs at the very end of the post-processing phase.
 
-ROOTFS_POSTPROCESS_COMMAND += "rootfs_overlay_copy_last; "
+ROOTFS_POSTPROCESS_COMMAND += "rootfs_overlay_copy_last; setup_rootfs_overlay_init; "
 
 rootfs_overlay_copy_last() {
-    # 确保变量 META_RK3566_ACROPI_BASE 已经定义
-    # 如果没有定义，尝试从 layer.conf 的逻辑中推导或使用默认相对路径
+    # Ensure META_RK3566_ACROPI_BASE variable is defined
+    # If not, fallback to relative logic or default paths
     OVERLAY_SRC="${META_RK3566_ACROPI_BASE}/recipes-core/kpoky-config/files/files"
     
     if [ -d "$OVERLAY_SRC" ]; then
         echo "Applying permanent rootfs overlay from $OVERLAY_SRC..."
-        # 使用 -af 保持权限和属性，强制覆盖
+        # Use -af to preserve attributes and force overwrite
         cp -af "$OVERLAY_SRC"/* ${IMAGE_ROOTFS}/
 
-        # 1. 确保所有复制进来的可执行脚本和二进制文件拥有可执行权限 (chmod +x)
+        # 1. Ensure copied scripts and binaries have executable permissions
         echo "Setting executable permissions on overlay scripts and binaries..."
         find ${IMAGE_ROOTFS}/usr/bin ${IMAGE_ROOTFS}/usr/sbin ${IMAGE_ROOTFS}/etc/init.d -type f -exec chmod +x {} + 2>/dev/null || true
 
-        # 2. 确保 /var/www 目录及其下的网页文件拥有正确的权限 (777 / chown)
+        # 2. Ensure /var/www and web files have correct permissions
         if [ -d "${IMAGE_ROOTFS}/var/www" ]; then
             echo "Setting permissions and ownership for /var/www..."
             chmod -R 777 ${IMAGE_ROOTFS}/var/www
-            # 如果系统里存在 www-data 用户，则设为 www-data，否则设为 root 保证正常运作
+            # Use www-data owner if exists, otherwise fallback to root
             chown -R www-data:www-data ${IMAGE_ROOTFS}/var/www 2>/dev/null || chown -R root:root ${IMAGE_ROOTFS}/var/www
         fi
     else
         echo "Warning: Rootfs overlay source directory $OVERLAY_SRC not found."
     fi
+}
+
+python setup_rootfs_overlay_init() {
+    import os
+    import shutil
+
+    image_rootfs = d.getVar('IMAGE_ROOTFS')
+    
+    # Pre-create mount points for read-only system to prevent read-only errors on boot
+    for dir_path in ['mnt/rom', 'mnt/overlay', 'new_root']:
+        os.makedirs(os.path.join(image_rootfs, dir_path), exist_ok=True)
+
+    # Fix 'Configuring network interfaces... ip: SIOCGIFFLAGS: No such device' warning
+    interfaces_path = os.path.join(image_rootfs, 'etc/network/interfaces')
+    if os.path.exists(interfaces_path):
+        with open(interfaces_path, 'r') as f:
+            lines = f.readlines()
+        new_lines = []
+        for line in lines:
+            if 'eth0' in line:
+                continue
+            new_lines.append(line)
+        with open(interfaces_path, 'w') as f:
+            f.writelines(new_lines)
+
+    init_path = os.path.join(image_rootfs, 'sbin/init')
+    init_real_path = os.path.join(image_rootfs, 'sbin/init.real')
+    init_wrapper_path = os.path.join(image_rootfs, 'sbin/init.wrapper')
+
+    # 1. Rename the real init binary
+    if os.path.islink(init_path):
+        link_target = os.readlink(init_path)
+        if link_target.startswith('/'):
+            target_path = os.path.join(image_rootfs, link_target.lstrip('/'))
+        else:
+            target_path = os.path.join(os.path.dirname(init_path), link_target)
+        shutil.move(target_path, init_real_path)
+        os.unlink(init_path)
+    elif os.path.exists(init_path):
+        shutil.move(init_path, init_real_path)
+
+    # 2. Replace /sbin/init with init.wrapper copied via files/files
+    if os.path.exists(init_wrapper_path):
+        shutil.move(init_wrapper_path, init_path)
+        os.chmod(init_path, 0o755)
+    else:
+        raise RuntimeError("setup_rootfs_overlay_init: init.wrapper not found in rootfs sbin/")
 }

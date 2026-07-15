@@ -1,0 +1,13 @@
+#!/bin/sh
+echo "=== WARNING: This will restore the system to factory settings ==="
+echo "All user configurations and installed software will be permanently deleted."
+read -p "Are you sure you want to proceed? (y/N) " confirm
+if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+    echo "Clearing overlay partition..."
+    rm -rf /overlay/upper/* /overlay/work/*
+    sync
+    echo "Reset complete. Rebooting now..."
+    reboot -f
+else
+    echo "Aborted."
+fi

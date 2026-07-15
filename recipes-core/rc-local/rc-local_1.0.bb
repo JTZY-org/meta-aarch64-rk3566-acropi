@@ -12,17 +12,17 @@ UNPACKDIR = "${S}"
 
 inherit update-rc.d
 
-# 设置启动优先级为 99，确保最后运行
+# Set start priority to 99 to ensure it runs last
 INITSCRIPT_NAME = "rc.local"
 INITSCRIPT_PARAMS = "defaults 99"
 
 do_install() {
     install -d ${D}${sysconfdir}/init.d
     
-    # 安装用户脚本
+    # Install user script
     install -m 0755 ${UNPACKDIR}/rc.local ${D}${sysconfdir}/rc.local
     
-    # 安装 init 包装脚本
+    # Install init wrapper script
     install -m 0755 ${UNPACKDIR}/rc.local.init ${D}${sysconfdir}/init.d/rc.local
 }
 

@@ -21,7 +21,7 @@ INSANE_SKIP:${PN}-src += "buildpaths"
 S = "${UNPACKDIR}/git"
 
 do_configure:prepend() {
-    # 注入架构支持
+    # Inject real-time architecture support
     sed -i "s/select ARCH_WANT_DEFAULT_BPF_JIT/select ARCH_WANT_DEFAULT_BPF_JIT\n\tselect ARCH_SUPPORTS_RT/g" ${S}/arch/arm64/Kconfig
 }
 

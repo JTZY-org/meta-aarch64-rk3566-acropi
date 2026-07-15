@@ -15,7 +15,7 @@ case "$1" in
         fi
         ;;
     stop|restart|reload)
-        # rc.local 通常不需要处理停止逻辑
+        # rc.local usually does not need to handle stop logic
         ;;
     *)
         echo "Usage: $0 {start|stop|restart}"

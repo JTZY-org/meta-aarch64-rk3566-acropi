@@ -33,8 +33,8 @@ do_install() {
     install -d ${D}${bindir}
     install -m 0755 ${UNPACKDIR}/usb-rndis-setup.sh ${D}${bindir}/usb-rndis-setup.sh
 
-    # 注意：files/files 目录现在通过 kpoky.conf 中的 ROOTFS_POSTPROCESS_COMMAND 统一处理，
-    # 以实现最后的强制覆盖，避免与 nginx 等包冲突。
+    # Note: files/files directory is now handled globally via ROOTFS_POSTPROCESS_COMMAND
+    # in kpoky.conf to achieve final forced copy and avoid conflicts with other recipes (e.g. nginx).
 
     install -d ${D}${sysconfdir}/init.d
     install -m 0755 ${UNPACKDIR}/usb-rndis-init ${D}${sysconfdir}/init.d/usb-rndis

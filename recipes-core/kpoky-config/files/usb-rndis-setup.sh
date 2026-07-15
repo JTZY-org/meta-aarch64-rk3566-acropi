@@ -10,7 +10,7 @@ echo device > /sys/kernel/debug/usb/fcc00000.usb/mode
 
 modprobe libcomposite
 modprobe usb_f_rndis
-mount -t configfs none /sys/kernel/config
+mountpoint -q /sys/kernel/config || mount -t configfs none /sys/kernel/config
 mkdir -p /sys/kernel/config/usb_gadget/g1
 cd /sys/kernel/config/usb_gadget/g1
 
@@ -35,8 +35,7 @@ mkdir strings/0x409
 # Generate or retrieve USB serial number
 SERIAL_FILE="/etc/usb_serial_number"
 if [ ! -s "$SERIAL_FILE" ]; then
-    # Generate a random 16-character alphanumeric serial number on first boot
-    SERIAL=$(head -c 12 /dev/urandom | base64 | tr -dc "A-Za-z0-9" | head -c 16); [ -z "$SERIAL" ] && SERIAL="RK3566$(date +%s)"
+    SERIAL=$(tr -dc "A-Za-z0-9" < /dev/urandom | dd bs=1 count=16 2>/dev/null); [ -z "$SERIAL" ] && SERIAL="RK3566$(date +%s)"
     echo "$SERIAL" > "$SERIAL_FILE"
 else
     # Read existing serial number
