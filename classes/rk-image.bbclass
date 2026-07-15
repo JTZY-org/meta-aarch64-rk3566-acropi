@@ -58,6 +58,13 @@ IMAGE_CMD:rkimg () {
         local align_sectors=8192
         rootfs_sectors=$(expr \( \( $rootfs_sectors + $align_sectors - 1 \) / $align_sectors \) \* $align_sectors)
         
+        # Ensure a minimum rootfs partition size of 1.5GB (3145728 sectors / 512 bytes)
+        # to leave ample headroom for future OTA upgrades without partition conflicts
+        local min_sectors=3145728
+        if [ $rootfs_sectors -lt $min_sectors ]; then
+            rootfs_sectors=$min_sectors
+        fi
+
         # Calculate data partition start sector (rootfs offset is 0x40000 = 262144 sectors)
         local rootfs_start=262144
         local data_start=$(expr $rootfs_start + $rootfs_sectors)

@@ -8,18 +8,38 @@ if [ -z "$OTA_IMAGE" ] || [ ! -f "$OTA_IMAGE" ]; then
     exit 1
 fi
 
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+
 echo "=== 1. Prepare temporary RAM root ==="
 RAMROOT="/tmp/ramroot"
 mkdir -p $RAMROOT
 mount -t tmpfs tmpfs $RAMROOT
-mkdir -p $RAMROOT/bin $RAMROOT/sbin $RAMROOT/lib $RAMROOT/usr $RAMROOT/proc $RAMROOT/sys $RAMROOT/dev $RAMROOT/tmp
+mkdir -p $RAMROOT/bin $RAMROOT/sbin $RAMROOT/lib $RAMROOT/lib64 $RAMROOT/usr/lib $RAMROOT/usr/sbin $RAMROOT/proc $RAMROOT/sys $RAMROOT/dev $RAMROOT/tmp
 
-for bin in busybox dd reboot mount umount sync sleep sh; do
-    cp -a $(which $bin) $RAMROOT/bin/ 2>/dev/null || true
+for bin in busybox dd reboot mount umount sync sleep sh chroot; do
+    cp -fL $(which $bin) $RAMROOT/bin/ 2>/dev/null || true
 done
 cp -a /lib/* $RAMROOT/lib/ 2>/dev/null || true
+cp -a /lib64/* $RAMROOT/lib64/ 2>/dev/null || true
+cp -a /usr/lib/* $RAMROOT/usr/lib/ 2>/dev/null || true
 
-mv "$OTA_IMAGE" $RAMROOT/tmp/new_rootfs.squashfs
+ABS_IMAGE=$(realpath "$OTA_IMAGE")
+
+# Safety Check: Ensure the new SquashFS image does not exceed the allocated size of /dev/mmcblk0p4
+if [ -f "/sys/class/block/mmcblk0p4/size" ]; then
+    PART_SECTORS=$(cat /sys/class/block/mmcblk0p4/size)
+    PART_SIZE=$(expr $PART_SECTORS \* 512)
+    IMG_SIZE=$(stat -c%s "$ABS_IMAGE")
+    if [ "$IMG_SIZE" -gt "$PART_SIZE" ]; then
+        echo "=========================================================="
+        echo "ERROR: New SquashFS size ($(expr $IMG_SIZE / 1024 / 1024)MB) exceeds"
+        echo "the allocated partition size ($(expr $PART_SIZE / 1024 / 1024)MB) on the flash!"
+        echo "Writing this image will corrupt the user data partition (/dev/mmcblk0p5)."
+        echo "OTA Upgrade Aborted!"
+        echo "=========================================================="
+        exit 1
+    fi
+fi
 
 echo "=== 2. Bind API filesystems ==="
 mount --make-rprivate /
@@ -33,14 +53,20 @@ mkdir -p oldroot
 pivot_root . oldroot
 
 echo "=== 4. Flash and reboot ==="
-exec chroot . sh -c '
+exec busybox chroot . sh -c '
+    # Open the SquashFS file on file descriptor 3 to keep it active in the kernel
+    exec 3< "/oldroot'"$ABS_IMAGE"'"
+    
+    # Safely lazy-unmount the target rootfs partition and source overlay partition
+    # This prevents any system processes from accessing them during the raw write
     umount -l /oldroot/overlay 2>/dev/null || true
     umount -l /oldroot 2>/dev/null || true
     
     echo "Writing new SquashFS to /dev/mmcblk0p4..."
-    dd if=/tmp/new_rootfs.squashfs of=/dev/mmcblk0p4 bs=1M
+    dd <&3 of=/dev/mmcblk0p4 bs=1M
     sync
     
     echo "OTA upgrade successful. Rebooting now..."
-    reboot -f
+    echo 1 > /proc/sys/kernel/sysrq
+    echo b > /proc/sysrq-trigger
 '

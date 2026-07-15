@@ -1,6 +1,12 @@
 #!/bin/sh
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
+# If not running as PID 1, this is a runlevel/control call (e.g., 'init 6').
+# Immediately forward it to the real init binary.
+if [ "$$" -ne 1 ]; then
+    exec /sbin/init.real "$@"
+fi
+
 # Mount virtual filesystems for bootstrap mounting actions
 mount -t proc proc /proc
 mount -t sysfs sys /sys
@@ -38,9 +44,16 @@ mount -t overlay overlay -o lowerdir=/mnt/rom,upperdir=/mnt/overlay/upper,workdi
 mkdir -p /new_root/rom
 mkdir -p /new_root/overlay
 mount --move /mnt/overlay /new_root/overlay
-mount --move /sys /new_root/sys
-mount --move /proc /new_root/proc
+umount /sys 2>/dev/null || true
+umount /proc 2>/dev/null || true
 mount --move /dev /new_root/dev
+
+# Pre-mount volatile filesystems in the new root to ensure SysVinit control channel (/run/initctl) is immediately writable
+mkdir -p /new_root/run
+mount -t tmpfs tmpfs /new_root/run
+mkdir -p /new_root/var/volatile
+mount -t tmpfs tmpfs /new_root/var/volatile
+mkdir -p /new_root/var/volatile/run /new_root/var/volatile/tmp /new_root/var/volatile/log /new_root/var/volatile/lock
 
 # Pivot Root and hand over control to the real init
 cd /new_root

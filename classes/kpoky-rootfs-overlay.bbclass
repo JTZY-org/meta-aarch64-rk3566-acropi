@@ -42,6 +42,26 @@ python setup_rootfs_overlay_init() {
     for dir_path in ['mnt/rom', 'mnt/overlay', 'new_root']:
         os.makedirs(os.path.join(image_rootfs, dir_path), exist_ok=True)
 
+    # Ensure /run is a real directory and /var/run points to it, matching modern layouts
+    run_dir = os.path.join(image_rootfs, 'run')
+    if os.path.islink(run_dir):
+        os.unlink(run_dir)
+    os.makedirs(run_dir, exist_ok=True)
+
+    var_run_dir = os.path.join(image_rootfs, 'var/run')
+    if os.path.islink(var_run_dir) or os.path.exists(var_run_dir):
+        try:
+            if os.path.islink(var_run_dir):
+                os.unlink(var_run_dir)
+            else:
+                shutil.rmtree(var_run_dir)
+        except Exception:
+            pass
+    try:
+        os.symlink('/run', var_run_dir)
+    except Exception:
+        pass
+
     # Fix 'Configuring network interfaces... ip: SIOCGIFFLAGS: No such device' warning
     interfaces_path = os.path.join(image_rootfs, 'etc/network/interfaces')
     if os.path.exists(interfaces_path):
