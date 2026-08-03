@@ -11,6 +11,39 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    location /webdav/ {
+        root /var/www/localhost/html;
+        dav_methods PUT DELETE MKCOL COPY MOVE;
+        create_full_put_path on;
+        dav_access user:rw group:rw all:r;
+        client_max_body_size 100M;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*';
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS, PROPFIND';
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization';
+            return 204;
+        }
+        add_header 'Access-Control-Allow-Origin' '*' always;
+    }
+
+    location = /APSconfig.json {
+        alias /etc/APSconfig.json;
+        dav_methods PUT;
+        dav_access user:rw group:rw all:r;
+        client_max_body_size 2M;
+
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, PUT, OPTIONS' always;
+            add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization' always;
+            return 204;
+        }
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, PUT, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Content-Type, Authorization' always;
+    }
+
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable";

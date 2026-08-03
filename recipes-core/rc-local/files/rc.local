@@ -16,7 +16,8 @@ if [ -f "/usr/bin/Ru_Calibrating" ]; then
 fi
 
 sleep 2
-tmux new-session -d -s aps "/usr/bin/RuAPM_Cli"
+tmux new-session -d -s aps "/usr/bin/RuAPM_Cli -c"
+ttyd -W -p 7681 tmux new-session -A -s aps &
 #tmux new-session -d -s sin "sinffer wlan0 RuAPS_BEACON_5AEC HT20 5825"
 sleep 2
 cpu-tool.sh set-freq 1104000 &
