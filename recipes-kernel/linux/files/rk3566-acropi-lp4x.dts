@@ -10,13 +10,61 @@
 #include <dt-bindings/power/rk3568-power.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/pinctrl/rockchip.h>
+#include <dt-bindings/display/drm_mipi_dsi.h>
 #include "rk3566.dtsi"
+
 
 / {
 	model = "Acropi RK3566 Board";
 	compatible = "rockchip,rk3566-acropi", "rockchip,rk3566";
 
 	backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&pwm5 0 25000 0>; // PWM5, 周期 25000ns (40kHz)
+
+		/* 如果电路中有背光 IC 的 Enable 脚，必须配置这行 */
+		enable-gpios = <&gpio4 RK_PC6 GPIO_ACTIVE_HIGH>;
+
+		brightness-levels = <
+			  0  20  20  21  21  22  22  23
+			 23  24  24  25  25  26  26  27
+			 27  28  28  29  29  30  30  31
+			 31  32  32  33  33  34  34  35
+			 35  36  36  37  37  38  38  39
+			 40  41  42  43  44  45  46  47
+			 48  49  50  51  52  53  54  55
+			 56  57  58  59  60  61  62  63
+			 64  65  66  67  68  69  70  71
+			 72  73  74  75  76  77  78  79
+			 80  81  82  83  84  85  86  87
+			 88  89  90  91  92  93  94  95
+			 96  97  98  99 100 101 102 103
+			104 105 106 107 108 109 110 111
+			112 113 114 115 116 117 118 119
+			120 121 122 123 124 125 126 127
+			128 129 130 131 132 133 134 135
+			136 137 138 139 140 141 142 143
+			144 145 146 147 148 149 150 151
+			152 153 154 155 156 157 158 159
+			160 161 162 163 164 165 166 167
+			168 169 170 171 172 173 174 175
+			176 177 178 179 180 181 182 183
+			184 185 186 187 188 189 190 191
+			192 193 194 195 196 197 198 199
+			200 201 202 203 204 205 206 207
+			208 209 210 211 212 213 214 215
+			216 217 218 219 220 221 222 223
+			224 225 226 227 228 229 230 231
+			232 233 234 235 236 237 238 239
+			240 241 242 243 244 245 246 247
+			248 249 250 251 252 253 254 255
+		>;
+		default-brightness-level = <255>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&bl_en_gpio>;
+	};
+
+	backlight_edp: backlight-edp {
 		compatible = "pwm-backlight";
 		pwms = <&pwm4 0 25000 0>;
 		brightness-levels = <0 4 8 12 16 20 24 28
@@ -33,8 +81,9 @@
 	};
 
 	panel_edp: panel-edp {
+		status = "disabled";
 		compatible = "simple-panel";
-		backlight = <&backlight>;
+		backlight = <&backlight_edp>;
 		power-supply = <&vcc3v3_sys>;
 		enable-gpios = <&gpio0 RK_PA6 GPIO_ACTIVE_HIGH>;
 		prepare-delay-ms = <120>;
@@ -485,6 +534,25 @@
 			rockchip,pins = <4 RK_PC5 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
+
+	dsi1 {
+		/* Reset 管脚: GPIO3_C1 */
+		dsi1_rst_gpio: dsi1-rst-gpio {
+			rockchip,pins = <3 RK_PC1 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+
+		/* 屏幕电源/LCD使能管脚: GPIO0_B5 (按板卡实际填) */
+		lcd_pwr_gpio: lcd-pwr-gpio {
+			rockchip,pins = <0 RK_PB5 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	backlight_pins {
+		/* 背光 Enable 脚: GPIO4_C6 */
+		bl_en_gpio: bl-en-gpio {
+			rockchip,pins = <4 RK_PC6 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
 };
 
 &pmu_io_domains {
@@ -923,12 +991,16 @@
 };
 
 &pwm4 {
+	status = "disabled";
+};
+
+&pwm5 {
 	status = "okay";
 };
 
 &edp {
 	force-hpd;
-	status = "okay";
+	status = "disabled";
 
 	ports {
 		port@1 {
@@ -942,67 +1014,32 @@
 };
 
 &edp_phy {
-	status = "okay";
+	status = "disabled";
+};
+
+&edp_in_vp0 {
+	status = "disabled";
 };
 
 &edp_in_vp1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &route_edp {
-	connect = <&vp1_out_edp>;
-	status = "okay";
+	connect = <&vp0_out_edp>;
+	status = "disabled";
+};
+
+&hdmi {
+	status = "disabled";
+};
+
+&route_hdmi {
+	status = "disabled";
 };
 
 &dsi0 {
 	status = "disabled";
-
-	// ports {
-	// 	port@1 {
-	// 		reg = <1>;
-	// 		dsi0_out_panel: endpoint {
-	// 			remote-endpoint = <&panel_in_dsi>;
-	// 		};
-	// 	};
-	// };
-
-	// panel@0 {
-	// 	compatible = "simple-panel-dsi";
-	// 	reg = <0>;
-	// 	backlight = <&backlight>;
-	// 	power-supply = <&vcc3v3_sys>;
-	// 	reset-gpios = <&gpio4 RK_PC5 GPIO_ACTIVE_LOW>;
-	// 	prepare-delay-ms = <20>;
-	// 	enable-delay-ms = <20>;
-	// 	pinctrl-names = "default";
-	// 	pinctrl-0 = <&lcd0_rst_gpio>;
-	// 	bpc = <8>;
-
-	// 	dsi,format = <0>; /* MIPI_DSI_FMT_RGB888 */
-	// 	dsi,lanes = <4>;
-
-	// 	panel-timing {
-	// 		clock-frequency = <68000000>;
-	// 		hactive = <800>;
-	// 		vactive = <1280>;
-	// 		hback-porch = <30>;
-	// 		hfront-porch = <30>;
-	// 		vback-porch = <4>;
-	// 		vfront-porch = <2>;
-	// 		hsync-len = <4>;
-	// 		vsync-len = <2>;
-	// 		hsync-active = <0>;
-	// 		vsync-active = <0>;
-	// 		de-active = <0>;
-	// 		pixelclk-active = <0>;
-	// 	};
-
-	// 	port {
-	// 		panel_in_dsi: endpoint {
-	// 			remote-endpoint = <&dsi0_out_panel>;
-	// 		};
-	// 	};
-	// };
 };
 
 &video_phy0 {
@@ -1014,8 +1051,303 @@
 };
 
 &route_dsi0 {
-	// connect = <&vp0_out_dsi0>;
 	status = "disabled";
+};
+
+&dsi1 {
+	status = "okay";
+	rockchip,lane-rate = <480>;
+
+	dsi1_panel: panel@0 {
+		status = "okay";
+		compatible = "simple-panel-dsi";
+		reg = <0>;
+		bpc = <8>;
+		power-supply = <&vcc3v3_sys>;
+
+		/* GPIO 关联 */
+		reset-gpios = <&gpio3 RK_PC1 GPIO_ACTIVE_LOW>;   // 屏幕 Reset
+		enable-gpios = <&gpio0 RK_PB5 GPIO_ACTIVE_HIGH>;  // 屏幕 Power/Enable (可选)
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&dsi1_rst_gpio &lcd_pwr_gpio>;
+
+		/* 关联背光节点 */
+		backlight = <&backlight>;
+
+		/* U-Boot 留空时，内核冷启动必须配足的关键延时 */
+		reset-delay-ms = <10>;    // Reset 脚保持低电平时间 >= 10ms
+		enable-delay-ms = <120>;  // 上电/Reset 拉高后面板内部芯片准备时间 >= 120ms
+		init-delay-ms = <120>;    // 新增：复位拉高后至发送初始化序列前的延时
+		prepare-delay-ms = <20>;  // 发送 init-sequence 之前的延迟
+		unprepare-delay-ms = <20>;
+		disable-delay-ms = <50>;
+
+		/* DSI 传输模式 */
+		dsi,flags = <(MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
+			MIPI_DSI_MODE_LPM | MIPI_DSI_MODE_NO_EOT_PACKET)>;
+		dsi,format = <MIPI_DSI_FMT_RGB888>;
+		dsi,lanes  = <4>;
+
+		/* 初始化指令序列... (保持之前的 panel-init-sequence) */
+		panel-init-sequence = [
+			39 00 04 FF 98 81 03
+			15 00 02 01 00
+			15 00 02 02 00
+			15 00 02 03 73
+			15 00 02 04 13
+			15 00 02 05 00
+			15 00 02 06 0A
+			15 00 02 07 05
+			15 00 02 08 00
+			15 00 02 09 28
+			15 00 02 0A 00
+			15 00 02 0B 00
+			15 00 02 0C 00
+			15 00 02 0D 28
+			15 00 02 0E 00
+			15 00 02 0F 28
+			15 00 02 10 28
+			05 00 01 11
+			15 00 02 12 00
+			15 00 02 13 00
+			15 00 02 14 00
+			15 00 02 15 00
+			15 00 02 16 00
+			15 00 02 17 00
+			15 00 02 18 00
+			15 00 02 19 00
+			15 00 02 1A 00
+			15 00 02 1B 00
+			15 00 02 1C 00
+			15 00 02 1D 00
+			15 00 02 1E 40
+			15 00 02 1F 80
+			15 00 02 20 06
+			15 00 02 21 01
+			15 00 02 22 00
+			15 00 02 23 00
+			15 00 02 24 00
+			15 00 02 25 00
+			15 00 02 26 00
+			15 00 02 27 00
+			15 00 02 28 33
+			15 00 02 29 33
+			15 00 02 2A 00
+			15 00 02 2B 00
+			15 00 02 2C 04
+			15 00 02 2D 04
+			15 00 02 2E 05
+			15 00 02 2F 05
+			15 00 02 30 00
+			15 00 02 31 00
+			15 00 02 32 31
+			15 00 02 33 00
+			15 00 02 34 00
+			15 00 02 35 0A
+			15 00 02 36 00
+			15 00 02 37 08
+			15 00 02 38 00
+			15 00 02 39 00
+			15 00 02 3A 00
+			15 00 02 3B 00
+			15 00 02 3C 00
+			15 00 02 3D 00
+			15 00 02 3E 00
+			15 00 02 3F 00
+			15 00 02 40 00
+			15 00 02 41 00
+			15 00 02 42 00
+			15 00 02 43 08
+			15 00 02 44 00
+			15 00 02 50 01
+			15 00 02 51 23
+			15 00 02 52 44
+			15 00 02 53 67
+			15 00 02 54 89
+			15 00 02 55 AB
+			15 00 02 56 01
+			15 00 02 57 23
+			15 00 02 58 45
+			15 00 02 59 67
+			15 00 02 5A 89
+			15 00 02 5B AB
+			15 00 02 5C CD
+			15 00 02 5D EF
+			15 00 02 5E 11
+			15 00 02 5F 02
+			15 00 02 60 08
+			15 00 02 61 0E
+			15 00 02 62 0F
+			15 00 02 63 0C
+			15 00 02 64 0D
+			15 00 02 65 17
+			15 00 02 66 01
+			15 00 02 67 01
+			15 00 02 68 02
+			15 00 02 69 02
+			15 00 02 6A 00
+			15 00 02 6B 00
+			15 00 02 6C 02
+			15 00 02 6D 02
+			15 00 02 6E 16
+			15 00 02 6F 16
+			15 00 02 70 06
+			15 00 02 71 06
+			15 00 02 72 07
+			15 00 02 73 07
+			15 00 02 74 02
+			15 00 02 75 02
+			15 00 02 76 08
+			15 00 02 77 0E
+			15 00 02 78 0F
+			15 00 02 79 0C
+			15 00 02 7A 0D
+			15 00 02 7B 17
+			15 00 02 7C 01
+			15 00 02 7D 01
+			15 00 02 7E 02
+			15 00 02 7F 02
+			15 00 02 80 00
+			15 00 02 81 00
+			15 00 02 82 02
+			15 00 02 83 02
+			15 00 02 84 16
+			15 00 02 85 16
+			15 00 02 86 06
+			15 00 02 87 06
+			15 00 02 88 07
+			15 00 02 89 07
+			15 00 02 8A 02
+			39 00 04 FF 98 81 04
+			15 00 02 6E 1A
+			15 00 02 6F 37
+			15 00 02 3A A4
+			15 00 02 8D 1F
+			15 00 02 87 BA
+			15 00 02 B2 D1
+			15 00 02 88 0B
+			15 00 02 38 01
+			15 00 02 39 00
+			15 00 02 B5 02
+			15 00 02 31 25
+			15 00 02 3B 98
+			39 00 04 FF 98 81 01
+			15 00 02 22 0A
+			15 00 02 31 00
+			15 00 02 53 53
+			15 00 02 55 3D
+			15 00 02 50 9E
+			15 00 02 51 99
+			15 00 02 60 06
+			15 00 02 62 20
+			15 00 02 A0 00
+			15 00 02 A1 17
+			15 00 02 A2 26
+			15 00 02 A3 13
+			15 00 02 A4 16
+			15 00 02 A5 29
+			15 00 02 A6 1E
+			15 00 02 A7 1F
+			15 00 02 A8 8B
+			15 00 02 A9 1D
+			15 00 02 AA 2A
+			15 00 02 AB 7B
+			15 00 02 AC 1A
+			15 00 02 AD 19
+			15 00 02 AE 4E
+			15 00 02 AF 24
+			15 00 02 B0 29
+			15 00 02 B1 4F
+			15 00 02 B2 5C
+			15 00 02 B3 3E
+			15 00 02 C0 00
+			15 00 02 C1 17
+			15 00 02 C2 26
+			15 00 02 C3 13
+			15 00 02 C4 16
+			15 00 02 C5 29
+			15 00 02 C6 1E
+			15 00 02 C7 1F
+			15 00 02 C8 8B
+			15 00 02 C9 1D
+			15 00 02 CA 2A
+			15 00 02 CB 7B
+			15 00 02 CC 1A
+			15 00 02 CD 19
+			15 00 02 CE 4E
+			15 00 02 CF 24
+			15 00 02 D0 29
+			15 00 02 D1 4F
+			15 00 02 D2 5C
+			15 00 02 D3 3E
+			39 00 04 FF 98 81 00
+			05 78 01 11
+			05 00 01 29
+			15 00 02 35 00
+		];
+
+		panel-exit-sequence = [
+			05 00 01 28
+			05 00 01 10
+		];
+
+		disp_timings1: display-timings {
+			native-mode = <&dsi1_timing0>;
+			dsi1_timing0: timing0 {
+				clock-frequency = <66000000>;
+				hactive = <800>;
+				vactive = <1280>;
+				hfront-porch = <18>;
+				hsync-len = <12>;
+				hback-porch = <18>;
+				vfront-porch = <24>;
+				vsync-len = <4>;
+				vback-porch = <12>;
+				hsync-active = <0>;
+				vsync-active = <0>;
+				de-active = <0>;
+				pixelclk-active = <1>;
+			};
+		};
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				panel_in_dsi1: endpoint {
+					remote-endpoint = <&dsi1_out_panel>;
+				};
+			};
+		};
+	};
+
+	ports {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port@1 {
+			reg = <1>;
+			dsi1_out_panel: endpoint {
+				remote-endpoint = <&panel_in_dsi1>;
+			};
+		};
+	};
+};
+
+&video_phy1 {
+	status = "okay";
+};
+
+&dsi1_in_vp1 {
+	status = "okay";
+};
+
+&route_dsi1 {
+	connect = <&vp1_out_dsi1>;
+	status = "okay";
 };
 
 &vop {
