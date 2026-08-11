@@ -791,8 +791,7 @@
 
 		/* Polarity alignment with extracted.dts */
 		reset-gpios = <&gpio4 13 1>; /* RK_PB5, ACTIVE_LOW */
-		pwdn-gpios = <&gpio4 12 0>;  /* RK_PB4, ACTIVE_HIGH */
-		power-gpios = <&gpio0 8 0>;   /* RK_PB0, ACTIVE_HIGH */
+		pwdn-gpios = <&gpio4 12 1>;  /* RK_PB4, ACTIVE_LOW */
 
 		clocks = <&cru CLK_CIF_OUT>;
 		clock-names = "xvclk";
@@ -1358,6 +1357,15 @@
 
 &vop_mmu {
 	status = "okay";
+};
+
+&gpio0 {
+	camera-power-hog {
+		gpio-hog;
+		gpios = <8 0>; /* GPIO0_B0 (RK_PB0) */
+		output-high;
+		line-name = "camera-power-on";
+	};
 };
 
 
