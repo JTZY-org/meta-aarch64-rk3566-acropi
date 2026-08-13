@@ -1054,11 +1054,11 @@
 };
 
 &dsi1 {
-	status = "okay";
+	status = "disabled";
 	rockchip,lane-rate = <480>;
 
 	dsi1_panel: panel@0 {
-		status = "okay";
+		status = "disabled";
 		compatible = "simple-panel-dsi";
 		reg = <0>;
 		bpc = <8>;
@@ -1337,16 +1337,16 @@
 };
 
 &video_phy1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &dsi1_in_vp1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &route_dsi1 {
 	connect = <&vp1_out_dsi1>;
-	status = "okay";
+	status = "disabled";
 };
 
 &vop {
