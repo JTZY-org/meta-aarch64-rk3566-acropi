@@ -16,7 +16,14 @@ if [ -f "/usr/bin/Ru_Calibrating" ]; then
 fi
 
 sleep 2
-tmux new-session -d -s aps "/usr/bin/RuAPM_Cli -c"
+# Clean log file if it exceeds 3GB on boot (3221225472 bytes)
+if [ -f /usr/log/ruapm_cli.log ]; then
+    FILE_SIZE=$(stat -c %s /usr/log/ruapm_cli.log 2>/dev/null || echo 0)
+    if [ "$FILE_SIZE" -gt 3221225472 ]; then
+        rm -f /usr/log/ruapm_cli.log
+    fi
+fi
+tmux new-session -d -s aps "/usr/bin/RuAPM_Cli -c 2>&1 | tee -a /usr/log/ruapm_cli.log"
 ttyd -W -p 7681 tmux new-session -A -s aps &
 #tmux new-session -d -s sin "sinffer wlan0 RuAPS_BEACON_5AEC HT20 5825"
 sleep 2
