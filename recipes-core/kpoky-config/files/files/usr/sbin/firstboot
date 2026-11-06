@@ -1,8 +1,23 @@
 #!/bin/sh
+CONFIRM=0
+for arg in "$@"; do
+    if [ "$arg" = "-y" ] || [ "$arg" = "--yes" ]; then
+        CONFIRM=1
+        break
+    fi
+done
+
 echo "=== WARNING: This will restore the system to factory settings ==="
 echo "All user configurations and installed software will be permanently deleted."
-read -p "Are you sure you want to proceed? (y/N) " confirm
-if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
+
+if [ "$CONFIRM" -ne 1 ]; then
+    read -p "Are you sure you want to proceed? (y/N) " input
+    if [ "$input" = "y" ] || [ "$input" = "Y" ]; then
+        CONFIRM=1
+    fi
+fi
+
+if [ "$CONFIRM" -eq 1 ]; then
     echo "Clearing overlay partition..."
     rm -rf /overlay/upper/* /overlay/work/*
     sync
